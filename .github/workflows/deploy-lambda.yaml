@@ -1,4 +1,4 @@
-name: Deploy SkyGrid Lambda 1
+name: Deploy SkyGrid Lambda 2
 
 on:
   push:
