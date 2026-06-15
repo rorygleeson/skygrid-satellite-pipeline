@@ -1,4 +1,4 @@
-name: Deploy SkyGrid Lambda
+name: Deploy SkyGrid Lambda 1
 
 on:
   push:
@@ -10,9 +10,10 @@ permissions:
   contents: read
 
 env:
-  AWS_REGION: ap-southeast-2
+  AWS_REGION: us-east-1
   LAMBDA_FUNCTION_NAME: skygrid-celestrak-fetcher
   AWS_ROLE_ARN: arn:aws:iam::134387458447:role/skygrid-github-lambda-deploy-role
+
 
 jobs:
   deploy:
