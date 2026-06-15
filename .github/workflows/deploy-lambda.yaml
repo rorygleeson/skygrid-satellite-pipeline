@@ -1,1 +1,44 @@
-# To be implemented in Section 7
+name: Deploy SkyGrid Lambda
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-southeast-2
+  LAMBDA_FUNCTION_NAME: skygrid-celestrak-fetcher
+  AWS_ROLE_ARN: arn:aws:iam::134387458447:role/skygrid-github-lambda-deploy-role
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Show AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Package Lambda
+        run: |
+          cd lambda
+          zip -r ../lambda-package.zip .
+
+      - name: Deploy Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name "${{ env.LAMBDA_FUNCTION_NAME }}" \
+            --zip-file fileb://lambda-package.zip
