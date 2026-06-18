@@ -164,6 +164,9 @@
 
   <script>
     let selectedEntity = null;
+    let satelliteEntries = [];
+
+    const LIVE_UPDATE_INTERVAL_MS = 5000;
 
     const defaultPointStyle = {
       pixelSize: 5,
@@ -194,10 +197,8 @@
       return satellites;
     }
 
-    function calculateSatellitePosition(sat) {
-      const satrec = satellite.json2satrec(sat);
+    function calculateSatellitePositionFromSatrec(satrec) {
       const now = new Date();
-
       const positionAndVelocity = satellite.propagate(satrec, now);
 
       if (!positionAndVelocity.position) {
@@ -207,14 +208,10 @@
       const gmst = satellite.gstime(now);
       const geodetic = satellite.eciToGeodetic(positionAndVelocity.position, gmst);
 
-      const longitude = satellite.degreesLong(geodetic.longitude);
-      const latitude = satellite.degreesLat(geodetic.latitude);
-      const altitudeMeters = geodetic.height * 1000;
-
       return {
-        longitude,
-        latitude,
-        altitudeMeters
+        longitude: satellite.degreesLong(geodetic.longitude),
+        latitude: satellite.degreesLat(geodetic.latitude),
+        altitudeMeters: geodetic.height * 1000
       };
     }
 
@@ -276,7 +273,8 @@
     }
 
     function addRealSatellite(viewer, sat) {
-      const position = calculateSatellitePosition(sat);
+      const satrec = satellite.json2satrec(sat);
+      const position = calculateSatellitePositionFromSatrec(satrec);
 
       const entity = viewer.entities.add({
         name: sat.OBJECT_NAME,
@@ -301,7 +299,45 @@
         }
       });
 
+      satelliteEntries.push({
+        sat,
+        satrec,
+        entity,
+        position
+      });
+
       return entity;
+    }
+
+    function updateSatellitePositions() {
+      let updatedCount = 0;
+
+      for (const entry of satelliteEntries) {
+        try {
+          const position = calculateSatellitePositionFromSatrec(entry.satrec);
+
+          entry.position = position;
+
+          entry.entity.position = Cesium.Cartesian3.fromDegrees(
+            position.longitude,
+            position.latitude,
+            position.altitudeMeters
+          );
+
+          entry.entity.properties.calculatedPosition = position;
+
+          if (selectedEntity === entry.entity) {
+            showDetailsPanel(entry.sat, position);
+          }
+
+          updatedCount++;
+        } catch (err) {
+          console.warn("Failed to update satellite:", entry.sat.OBJECT_NAME, err);
+        }
+      }
+
+      document.getElementById("status").textContent =
+        updatedCount.toLocaleString() + " satellites live";
     }
 
     function setupClickHandler(viewer) {
@@ -401,6 +437,8 @@
 
       document.getElementById("status").textContent =
         plottedCount.toLocaleString() + " satellites online";
+
+      setInterval(updateSatellitePositions, LIVE_UPDATE_INTERVAL_MS);
     }
 
     startSkyGrid().catch(error => {
