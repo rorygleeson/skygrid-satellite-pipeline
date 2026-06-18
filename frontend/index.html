@@ -407,16 +407,16 @@
 
       let lastTime = Date.now();
 
-      viewer.clock.onTick.addEventListener(function () {
-        const now = Date.now();
-        const deltaSeconds = (now - lastTime) / 1000;
-        lastTime = now;
+//      viewer.clock.onTick.addEventListener(function () {
+//        const now = Date.now();
+//       const deltaSeconds = (now - lastTime) / 1000;
+//        lastTime = now;
 
-        viewer.scene.camera.rotate(
-          Cesium.Cartesian3.UNIT_Z,
-          -0.008 * deltaSeconds
-        );
-      });
+//        viewer.scene.camera.rotate(
+//          Cesium.Cartesian3.UNIT_Z,
+//          -0.008 * deltaSeconds
+//        );
+//      });
 
       document.getElementById("status").textContent = "Earth online";
 
