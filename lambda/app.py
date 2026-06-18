@@ -1,3 +1,4 @@
+import gzip
 import json
 import logging
 import math
@@ -81,6 +82,17 @@ def archive_key(prefix: str, timestamp: datetime) -> str:
     )
 
 
+def analytics_key(prefix: str, timestamp: datetime) -> str:
+    return (
+        f"{prefix}/"
+        f"year={timestamp:%Y}/"
+        f"month={timestamp:%m}/"
+        f"day={timestamp:%d}/"
+        f"hour={timestamp:%H}/"
+        f"snapshot_{timestamp:%Y%m%dT%H%M%SZ}.jsonl.gz"
+    )
+
+
 def copy_latest_to_archive(bucket: str, latest_key: str, destination_key: str) -> None:
     s3.copy_object(
         Bucket=bucket,
@@ -98,6 +110,24 @@ def write_latest(bucket: str, latest_key: str, data: bytes) -> None:
         Body=data,
         ContentType="application/json",
         CacheControl="max-age=30",
+    )
+
+
+def write_analytics_jsonl_gzip(bucket: str, key: str, rows: list) -> None:
+    jsonl = "\n".join(
+        json.dumps(row, separators=(",", ":"))
+        for row in rows
+    ) + "\n"
+
+    compressed = gzip.compress(jsonl.encode("utf-8"))
+
+    s3.put_object(
+        Bucket=bucket,
+        Key=key,
+        Body=compressed,
+        ContentType="application/x-ndjson",
+        ContentEncoding="gzip",
+        CacheControl="max-age=300",
     )
 
 
@@ -231,19 +261,67 @@ def enrich_satellites(satellites: list, timestamp: datetime) -> tuple[list, int,
     return enriched, success_count, failure_count
 
 
+def build_analytics_rows(satellites: list, collection_time: datetime) -> list:
+    collection_time_str = collection_time.isoformat().replace("+00:00", "Z")
+    rows = []
+
+    for sat in satellites:
+        skygrid = sat.get("SKYGRID") or {}
+
+        rows.append(
+            {
+                "collection_time": collection_time_str,
+                "constellation": "STARLINK",
+                "object_name": sat.get("OBJECT_NAME"),
+                "object_id": sat.get("OBJECT_ID"),
+                "norad_cat_id": sat.get("NORAD_CAT_ID"),
+                "epoch": sat.get("EPOCH"),
+                "mean_motion": sat.get("MEAN_MOTION"),
+                "eccentricity": sat.get("ECCENTRICITY"),
+                "inclination": sat.get("INCLINATION"),
+                "ra_of_asc_node": sat.get("RA_OF_ASC_NODE"),
+                "arg_of_pericenter": sat.get("ARG_OF_PERICENTER"),
+                "mean_anomaly": sat.get("MEAN_ANOMALY"),
+                "ephemeris_type": sat.get("EPHEMERIS_TYPE"),
+                "classification_type": sat.get("CLASSIFICATION_TYPE"),
+                "element_set_no": sat.get("ELEMENT_SET_NO"),
+                "rev_at_epoch": sat.get("REV_AT_EPOCH"),
+                "bstar": sat.get("BSTAR"),
+                "mean_motion_dot": sat.get("MEAN_MOTION_DOT"),
+                "mean_motion_ddot": sat.get("MEAN_MOTION_DDOT"),
+                "skygrid_position_calculated_at": skygrid.get("position_calculated_at"),
+                "skygrid_latitude": skygrid.get("latitude"),
+                "skygrid_longitude": skygrid.get("longitude"),
+                "skygrid_altitude_km": skygrid.get("altitude_km"),
+                "skygrid_propagation_model": skygrid.get("propagation_model"),
+                "skygrid_coordinate_system": skygrid.get("coordinate_system"),
+                "skygrid_source": skygrid.get("source"),
+                "skygrid_position_available": skygrid.get("position_available", True),
+            }
+        )
+
+    return rows
+
+
 def lambda_handler(event, context):
     bucket = env("BUCKET_NAME")
     latest_key = env("LATEST_KEY")
     archive_prefix = env("ARCHIVE_PREFIX").rstrip("/")
+    analytics_prefix = os.environ.get(
+        "ANALYTICS_PREFIX",
+        "analytics/starlink_positions_jsonl",
+    ).rstrip("/")
     celestrak_url = env("CELESTRAK_URL")
 
     now = datetime.now(timezone.utc)
     destination_archive_key = archive_key(archive_prefix, now)
+    destination_analytics_key = analytics_key(analytics_prefix, now)
 
     logger.info("SkyGrid CelesTrak collector started")
     logger.info("Bucket: %s", bucket)
     logger.info("Latest key: %s", latest_key)
     logger.info("Archive key: %s", destination_archive_key)
+    logger.info("Analytics key: %s", destination_analytics_key)
 
     raw_data = fetch_celestrak(celestrak_url)
     satellites = parse_and_validate_satellite_json(raw_data)
@@ -269,11 +347,20 @@ def lambda_handler(event, context):
 
     write_latest(bucket, latest_key, new_data)
 
+    analytics_rows = build_analytics_rows(enriched_satellites, now)
+    write_analytics_jsonl_gzip(bucket, destination_analytics_key, analytics_rows)
+
     logger.info(
         "Updated latest file with %s satellites. Enriched: %s. Failures: %s",
         len(enriched_satellites),
         enriched_count,
         enrichment_failures,
+    )
+
+    logger.info(
+        "Wrote analytics JSONL file to %s with %s rows",
+        destination_analytics_key,
+        len(analytics_rows),
     )
 
     return {
@@ -287,6 +374,8 @@ def lambda_handler(event, context):
                 "archivedPreviousLatest": archived,
                 "latestKey": latest_key,
                 "archiveKey": destination_archive_key if archived else None,
+                "analyticsKey": destination_analytics_key,
+                "analyticsRowCount": len(analytics_rows),
             }
         ),
     }
