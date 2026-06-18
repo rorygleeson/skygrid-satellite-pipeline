@@ -5,7 +5,8 @@
   <title>SkyGrid Live</title>
 
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
-  <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css" />
+  <link rel="stylesheet"
+        href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css" />
 
   <style>
     html, body, #cesiumContainer {
@@ -23,13 +24,18 @@
       top: 20px;
       left: 20px;
       z-index: 1000;
+
       background: rgba(5, 15, 35, 0.72);
       border: 1px solid rgba(0, 255, 255, 0.28);
       border-radius: 12px;
+
       padding: 16px 20px;
+
       color: white;
+
       backdrop-filter: blur(10px);
       box-shadow: 0 0 30px rgba(0, 220, 255, 0.12);
+
       min-width: 260px;
     }
 
@@ -48,7 +54,7 @@
 
     .metric {
       margin-top: 12px;
-      color: #ffffff;
+      color: white;
       font-size: 14px;
     }
 
@@ -67,42 +73,58 @@
 </head>
 
 <body>
+
   <div id="cesiumContainer"></div>
 
   <div class="overlay">
     <div class="title">SKYGRID LIVE</div>
     <div class="subtitle">Starlink constellation viewer</div>
-    <div class="metric" id="satelliteCount">🛰 Loading satellites...</div>
-    <div class="status" id="status">Loading Earth...</div>
+
+    <div class="metric" id="satelliteCount">
+      🛰 Loading satellites...
+    </div>
+
+    <div class="status" id="status">
+      Loading Earth...
+    </div>
   </div>
 
   <script>
+
     async function loadStarlinkData() {
-      const response = await fetch("/data/starlink/latest/starlink.json?t=" + Date.now());
+
+      const response =
+        await fetch("/data/starlink/latest/starlink.json?t=" + Date.now());
 
       if (!response.ok) {
-        throw new Error("Failed to load Starlink data: HTTP " + response.status);
+        throw new Error(
+          "Failed to load Starlink data: HTTP " + response.status
+        );
       }
 
       const satellites = await response.json();
 
-      if (!Array.isArray(satellites)) {
-        throw new Error("Starlink data was not a JSON array");
-      }
-
       document.getElementById("satelliteCount").textContent =
-        "🛰 " + satellites.length.toLocaleString() + " satellites loaded";
+        "🛰 " +
+        satellites.length.toLocaleString() +
+        " satellites loaded";
 
       return satellites;
     }
 
     async function startSkyGrid() {
-      const imageryProvider = await Cesium.ArcGisMapServerImageryProvider.fromUrl(
-        "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
-      );
+
+      const imageryProvider =
+        await Cesium.ArcGisMapServerImageryProvider.fromUrl(
+          "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
+        );
 
       const viewer = new Cesium.Viewer("cesiumContainer", {
-        baseLayer: Cesium.ImageryLayer.fromProviderAsync(Promise.resolve(imageryProvider)),
+        baseLayer:
+          Cesium.ImageryLayer.fromProviderAsync(
+            Promise.resolve(imageryProvider)
+          ),
+
         animation: false,
         timeline: false,
         baseLayerPicker: false,
@@ -120,34 +142,71 @@
       viewer.scene.backgroundColor = Cesium.Color.BLACK;
 
       viewer.camera.setView({
-        destination: Cesium.Cartesian3.fromDegrees(135, -25, 25000000)
+        destination:
+          Cesium.Cartesian3.fromDegrees(
+            135,
+            -25,
+            25000000
+          )
       });
 
       let lastTime = Date.now();
 
       viewer.clock.onTick.addEventListener(function () {
+
         const now = Date.now();
         const deltaSeconds = (now - lastTime) / 1000;
+
         lastTime = now;
 
         viewer.scene.camera.rotate(
           Cesium.Cartesian3.UNIT_Z,
           -0.008 * deltaSeconds
         );
+
       });
 
-      document.getElementById("status").textContent = "Earth online";
+      document.getElementById("status").textContent =
+        "Earth online";
 
       await loadStarlinkData();
 
-      document.getElementById("status").textContent = "Starlink data online";
+      viewer.entities.add({
+
+        position:
+          Cesium.Cartesian3.fromDegrees(
+            145,
+            -25,
+            550000
+          ),
+
+        point: {
+          pixelSize: 10,
+          color: Cesium.Color.CYAN,
+          outlineColor: Cesium.Color.WHITE,
+          outlineWidth: 2
+        }
+
+      });
+
+      document.getElementById("status").textContent =
+        "Test satellite online";
+
     }
 
     startSkyGrid().catch(error => {
+
       console.error(error);
-      document.getElementById("status").textContent = "Error: " + error.message;
-      document.getElementById("satelliteCount").textContent = "🛰 Satellite data unavailable";
+
+      document.getElementById("status").textContent =
+        "Error: " + error.message;
+
+      document.getElementById("satelliteCount").textContent =
+        "🛰 Satellite data unavailable";
+
     });
+
   </script>
+
 </body>
 </html>
