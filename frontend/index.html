@@ -35,6 +35,59 @@
       min-width: 280px;
     }
 
+    .details-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      width: 320px;
+      background: rgba(5, 15, 35, 0.82);
+      border: 1px solid rgba(0, 255, 255, 0.32);
+      border-radius: 12px;
+      padding: 18px 20px;
+      color: white;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 35px rgba(0, 220, 255, 0.16);
+      display: none;
+    }
+
+    .details-title {
+      color: #69f3ff;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 7px 0;
+      font-size: 13px;
+    }
+
+    .detail-label {
+      color: #9fb6c8;
+    }
+
+    .detail-value {
+      color: #ffffff;
+      text-align: right;
+      word-break: break-word;
+    }
+
+    .close-button {
+      margin-top: 14px;
+      width: 100%;
+      padding: 8px;
+      background: rgba(0, 255, 255, 0.12);
+      color: #8ff7ff;
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
     .title {
       color: #69f3ff;
       font-size: 24px;
@@ -78,7 +131,40 @@
     <div class="status" id="status">Loading Earth...</div>
   </div>
 
+  <div class="details-panel" id="detailsPanel">
+    <div class="details-title" id="detailsTitle">Satellite</div>
+
+    <div class="detail-row">
+      <div class="detail-label">NORAD</div>
+      <div class="detail-value" id="detailsNorad">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Altitude</div>
+      <div class="detail-value" id="detailsAltitude">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Inclination</div>
+      <div class="detail-value" id="detailsInclination">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Mean Motion</div>
+      <div class="detail-value" id="detailsMeanMotion">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Epoch</div>
+      <div class="detail-value" id="detailsEpoch">-</div>
+    </div>
+
+    <button class="close-button" onclick="hideDetailsPanel()">Close</button>
+  </div>
+
   <script>
+    let selectedEntity = null;
+
     async function loadStarlinkData() {
       const response = await fetch("/data/starlink/latest/starlink.json?t=" + Date.now());
 
@@ -118,10 +204,50 @@
       };
     }
 
+    function formatNumber(value, decimals) {
+      if (value === undefined || value === null || Number.isNaN(Number(value))) {
+        return "-";
+      }
+
+      return Number(value).toFixed(decimals);
+    }
+
+    function showDetailsPanel(sat, position) {
+      document.getElementById("detailsTitle").textContent =
+        sat.OBJECT_NAME || "Unknown satellite";
+
+      document.getElementById("detailsNorad").textContent =
+        sat.NORAD_CAT_ID || "-";
+
+      document.getElementById("detailsAltitude").textContent =
+        formatNumber(position.altitudeMeters / 1000, 1) + " km";
+
+      document.getElementById("detailsInclination").textContent =
+        formatNumber(sat.INCLINATION, 2) + "°";
+
+      document.getElementById("detailsMeanMotion").textContent =
+        formatNumber(sat.MEAN_MOTION, 5);
+
+      document.getElementById("detailsEpoch").textContent =
+        sat.EPOCH || "-";
+
+      document.getElementById("detailsPanel").style.display = "block";
+    }
+
+    function hideDetailsPanel() {
+      document.getElementById("detailsPanel").style.display = "none";
+
+      if (selectedEntity) {
+        selectedEntity.point.pixelSize = 5;
+        selectedEntity.point.color = Cesium.Color.CYAN.withAlpha(0.65);
+        selectedEntity = null;
+      }
+    }
+
     function addRealSatellite(viewer, sat) {
       const position = calculateSatellitePosition(sat);
 
-      viewer.entities.add({
+      const entity = viewer.entities.add({
         name: sat.OBJECT_NAME,
         position: Cesium.Cartesian3.fromDegrees(
           position.longitude,
@@ -136,8 +262,47 @@
             2000000, 1.2,
             30000000, 0.25
           )
-          }
+        },
+        properties: {
+          satelliteData: sat,
+          calculatedPosition: position
+        }
       });
+
+      return entity;
+    }
+
+    function setupClickHandler(viewer) {
+      const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+      handler.setInputAction(function (movement) {
+        const picked = viewer.scene.pick(movement.position);
+
+        if (
+          !Cesium.defined(picked) ||
+          !picked.id ||
+          !picked.id.properties ||
+          !picked.id.properties.satelliteData
+        ) {
+          return;
+        }
+
+        if (selectedEntity) {
+          selectedEntity.point.pixelSize = 5;
+          selectedEntity.point.color = Cesium.Color.CYAN.withAlpha(0.65);
+        }
+
+        selectedEntity = picked.id;
+
+        selectedEntity.point.pixelSize = 12;
+        selectedEntity.point.color = Cesium.Color.WHITE;
+
+        const time = viewer.clock.currentTime;
+        const sat = selectedEntity.properties.satelliteData.getValue(time);
+        const position = selectedEntity.properties.calculatedPosition.getValue(time);
+
+        showDetailsPanel(sat, position);
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
     }
 
     async function startSkyGrid() {
@@ -145,12 +310,13 @@
         throw new Error("satellite.js failed to load");
       }
 
-      const imageryProvider = await Cesium.ArcGisMapServerImageryProvider.fromUrl(
-        "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
-      );
+      const imageryProvider =
+        await Cesium.ArcGisMapServerImageryProvider.fromUrl(
+          "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
+        );
 
       const viewer = new Cesium.Viewer("cesiumContainer", {
-        baseLayer: Cesium.ImageryLayer.fromProviderAsync(Promise.resolve(imageryProvider)),
+        imageryProvider: imageryProvider,
         animation: false,
         timeline: false,
         baseLayerPicker: false,
@@ -188,11 +354,9 @@
 
       const satellites = await loadStarlinkData();
 
-      const satellitesToDisplay = satellites;
-
       let plottedCount = 0;
 
-      for (const sat of satellitesToDisplay) {
+      for (const sat of satellites) {
         try {
           addRealSatellite(viewer, sat);
           plottedCount++;
@@ -201,8 +365,10 @@
         }
       }
 
+      setupClickHandler(viewer);
+
       document.getElementById("status").textContent =
-        plottedCount + " satellites online";
+        plottedCount.toLocaleString() + " satellites online";
     }
 
     startSkyGrid().catch(error => {
