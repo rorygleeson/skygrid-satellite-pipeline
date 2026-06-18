@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SkyGrid Live</title>
+
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+  <script src="https://unpkg.com/satellite.js@6.0.1/dist/satellite.min.js"></script>
+
+  <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css" />
+
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #020712;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(5, 15, 35, 0.72);
+      border: 1px solid rgba(0, 255, 255, 0.28);
+      border-radius: 12px;
+      padding: 16px 20px;
+      color: white;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 30px rgba(0, 220, 255, 0.12);
+      min-width: 280px;
+    }
+
+    .details-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      width: 320px;
+      background: rgba(5, 15, 35, 0.82);
+      border: 1px solid rgba(0, 255, 255, 0.32);
+      border-radius: 12px;
+      padding: 18px 20px;
+      color: white;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 35px rgba(0, 220, 255, 0.16);
+      display: none;
+    }
+
+    .details-title {
+      color: #69f3ff;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 7px 0;
+      font-size: 13px;
+    }
+
+    .detail-label {
+      color: #9fb6c8;
+    }
+
+    .detail-value {
+      color: #ffffff;
+      text-align: right;
+      word-break: break-word;
+    }
+
+    .close-button,
+    .live-button {
+      margin-top: 14px;
+      width: 100%;
+      padding: 8px;
+      background: rgba(0, 255, 255, 0.12);
+      color: #8ff7ff;
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .title {
+      color: #69f3ff;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: #d0d7e2;
+      font-size: 13px;
+    }
+
+    .metric {
+      margin-top: 12px;
+      color: white;
+      font-size: 14px;
+    }
+
+    .status {
+      margin-top: 8px;
+      color: #8ff7ff;
+      font-size: 12px;
+    }
+
+    .cesium-viewer-bottom,
+    .cesium-viewer-animationContainer,
+    .cesium-viewer-timelineContainer {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="cesiumContainer"></div>
+
+  <div class="overlay">
+    <div class="title">SKYGRID LIVE</div>
+    <div class="subtitle">Starlink constellation viewer</div>
+    <div class="metric" id="satelliteCount">🛰 Loading satellites...</div>
+    <div class="status" id="status">Loading Earth...</div>
+    <button class="live-button" id="liveModeButton">Live Mode: Off</button>
+  </div>
+
+  <div class="details-panel" id="detailsPanel">
+    <div class="details-title" id="detailsTitle">Satellite</div>
+
+    <div class="detail-row">
+      <div class="detail-label">NORAD</div>
+      <div class="detail-value" id="detailsNorad">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Altitude</div>
+      <div class="detail-value" id="detailsAltitude">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Inclination</div>
+      <div class="detail-value" id="detailsInclination">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Mean Motion</div>
+      <div class="detail-value" id="detailsMeanMotion">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Epoch</div>
+      <div class="detail-value" id="detailsEpoch">-</div>
+    </div>
+
+    <button class="close-button" onclick="hideDetailsPanel()">Close</button>
+  </div>
+
+  <script>
+    let selectedEntity = null;
+    let satelliteEntries = [];
+    let liveModeEnabled = false;
+    let liveUpdateTimer = null;
+
+    const LIVE_UPDATE_INTERVAL_MS = 5000;
+
+    const defaultPointStyle = {
+      pixelSize: 5,
+      color: Cesium.Color.CYAN.withAlpha(0.65),
+      outlineColor: Cesium.Color.TRANSPARENT,
+      outlineWidth: 0
+    };
+
+    const selectedPointStyle = {
+      pixelSize: 16,
+      color: Cesium.Color.WHITE,
+      outlineColor: Cesium.Color.YELLOW,
+      outlineWidth: 3
+    };
+
+    async function loadStarlinkData() {
+      const response = await fetch("/data/starlink/latest/starlink.json?t=" + Date.now());
+
+      if (!response.ok) {
+        throw new Error("Failed to load Starlink data: HTTP " + response.status);
+      }
+
+      const satellites = await response.json();
+
+      document.getElementById("satelliteCount").textContent =
+        "🛰 " + satellites.length.toLocaleString() + " satellites loaded";
+
+      return satellites;
+    }
+
+    function calculateSatellitePositionFromSatrec(satrec) {
+      const now = new Date();
+      const positionAndVelocity = satellite.propagate(satrec, now);
+
+      if (!positionAndVelocity.position) {
+        throw new Error("Could not propagate satellite position");
+      }
+
+      const gmst = satellite.gstime(now);
+      const geodetic = satellite.eciToGeodetic(positionAndVelocity.position, gmst);
+
+      return {
+        longitude: satellite.degreesLong(geodetic.longitude),
+        latitude: satellite.degreesLat(geodetic.latitude),
+        altitudeMeters: geodetic.height * 1000
+      };
+    }
+
+    function formatNumber(value, decimals) {
+      if (value === undefined || value === null || Number.isNaN(Number(value))) {
+        return "-";
+      }
+
+      return Number(value).toFixed(decimals);
+    }
+
+    function showDetailsPanel(sat, position) {
+      document.getElementById("detailsTitle").textContent =
+        sat.OBJECT_NAME || "Unknown satellite";
+
+      document.getElementById("detailsNorad").textContent =
+        sat.NORAD_CAT_ID || "-";
+
+      document.getElementById("detailsAltitude").textContent =
+        formatNumber(position.altitudeMeters / 1000, 1) + " km";
+
+      document.getElementById("detailsInclination").textContent =
+        formatNumber(sat.INCLINATION, 2) + "°";
+
+      document.getElementById("detailsMeanMotion").textContent =
+        formatNumber(sat.MEAN_MOTION, 5);
+
+      document.getElementById("detailsEpoch").textContent =
+        sat.EPOCH || "-";
+
+      document.getElementById("detailsPanel").style.display = "block";
+    }
+
+    function applyDefaultStyle(entity) {
+      if (!entity || !entity.point) return;
+
+      entity.point.pixelSize = defaultPointStyle.pixelSize;
+      entity.point.color = defaultPointStyle.color;
+      entity.point.outlineColor = defaultPointStyle.outlineColor;
+      entity.point.outlineWidth = defaultPointStyle.outlineWidth;
+    }
+
+    function applySelectedStyle(entity) {
+      if (!entity || !entity.point) return;
+
+      entity.point.pixelSize = selectedPointStyle.pixelSize;
+      entity.point.color = selectedPointStyle.color;
+      entity.point.outlineColor = selectedPointStyle.outlineColor;
+      entity.point.outlineWidth = selectedPointStyle.outlineWidth;
+    }
+
+    function hideDetailsPanel() {
+      document.getElementById("detailsPanel").style.display = "none";
+
+      if (selectedEntity) {
+        applyDefaultStyle(selectedEntity);
+        selectedEntity = null;
+      }
+    }
+
+    function addRealSatellite(viewer, sat) {
+      const satrec = satellite.json2satrec(sat);
+      const position = calculateSatellitePositionFromSatrec(satrec);
+
+      const entity = viewer.entities.add({
+        name: sat.OBJECT_NAME,
+        position: Cesium.Cartesian3.fromDegrees(
+          position.longitude,
+          position.latitude,
+          position.altitudeMeters
+        ),
+        point: {
+          pixelSize: defaultPointStyle.pixelSize,
+          color: defaultPointStyle.color,
+          outlineColor: defaultPointStyle.outlineColor,
+          outlineWidth: defaultPointStyle.outlineWidth,
+          scaleByDistance: new Cesium.NearFarScalar(
+            500000, 4.0,
+            30000000, 0.25
+          )
+        },
+        properties: {
+          satelliteData: sat,
+          calculatedPosition: position
+        }
+      });
+
+      satelliteEntries.push({
+        sat,
+        satrec,
+        entity,
+        position
+      });
+
+      return entity;
+    }
+
+    function updateSatellitePositions() {
+      let updatedCount = 0;
+
+      for (const entry of satelliteEntries) {
+        try {
+          const position = calculateSatellitePositionFromSatrec(entry.satrec);
+
+          entry.position = position;
+
+          entry.entity.position = Cesium.Cartesian3.fromDegrees(
+            position.longitude,
+            position.latitude,
+            position.altitudeMeters
+          );
+
+          entry.entity.properties.calculatedPosition = position;
+
+          if (selectedEntity === entry.entity) {
+            showDetailsPanel(entry.sat, position);
+          }
+
+          updatedCount++;
+        } catch (err) {
+          console.warn("Failed to update satellite:", entry.sat.OBJECT_NAME, err);
+        }
+      }
+
+      document.getElementById("status").textContent =
+        updatedCount.toLocaleString() + " satellites live";
+    }
+
+    function setLiveMode(enabled) {
+      liveModeEnabled = enabled;
+
+      const button = document.getElementById("liveModeButton");
+
+      if (liveModeEnabled) {
+        button.textContent = "Live Mode: On";
+        document.getElementById("status").textContent = "Live mode starting...";
+
+        updateSatellitePositions();
+
+        liveUpdateTimer = setInterval(
+          updateSatellitePositions,
+          LIVE_UPDATE_INTERVAL_MS
+        );
+      } else {
+        button.textContent = "Live Mode: Off";
+
+        if (liveUpdateTimer) {
+          clearInterval(liveUpdateTimer);
+          liveUpdateTimer = null;
+        }
+
+        document.getElementById("status").textContent =
+          satelliteEntries.length.toLocaleString() + " satellites static";
+      }
+    }
+
+    function setupLiveModeButton() {
+      const button = document.getElementById("liveModeButton");
+
+      button.addEventListener("click", function () {
+        setLiveMode(!liveModeEnabled);
+      });
+    }
+
+    function setupClickHandler(viewer) {
+      const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+      handler.setInputAction(function (movement) {
+        const picked = viewer.scene.pick(movement.position);
+
+        if (
+          !Cesium.defined(picked) ||
+          !picked.id ||
+          !picked.id.properties ||
+          !picked.id.properties.satelliteData
+        ) {
+          return;
+        }
+
+        if (selectedEntity) {
+          applyDefaultStyle(selectedEntity);
+        }
+
+        selectedEntity = picked.id;
+
+        applySelectedStyle(selectedEntity);
+
+        const time = viewer.clock.currentTime;
+        const sat = selectedEntity.properties.satelliteData.getValue(time);
+        const position = selectedEntity.properties.calculatedPosition.getValue(time);
+
+        showDetailsPanel(sat, position);
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    }
+
+    async function startSkyGrid() {
+      if (typeof satellite === "undefined") {
+        throw new Error("satellite.js failed to load");
+      }
+
+      setupLiveModeButton();
+
+      const imageryProvider =
+        await Cesium.ArcGisMapServerImageryProvider.fromUrl(
+          "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
+        );
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+          Promise.resolve(imageryProvider)
+        ),
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        fullscreenButton: false,
+        infoBox: false,
+        selectionIndicator: false
+      });
+
+      viewer.scene.globe.enableLighting = true;
+      viewer.scene.skyAtmosphere.show = true;
+      viewer.scene.backgroundColor = Cesium.Color.BLACK;
+
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(135, -25, 25000000)
+      });
+
+      document.getElementById("status").textContent = "Earth online";
+
+      const satellites = await loadStarlinkData();
+
+      let plottedCount = 0;
+
+      for (const sat of satellites) {
+        try {
+          addRealSatellite(viewer, sat);
+          plottedCount++;
+        } catch (err) {
+          console.warn("Failed to plot satellite:", sat.OBJECT_NAME, err);
+        }
+      }
+
+      setupClickHandler(viewer);
+
+      document.getElementById("status").textContent =
+        plottedCount.toLocaleString() + " satellites static";
+    }
+
+    startSkyGrid().catch(error => {
+      console.error(error);
+
+      document.getElementById("status").textContent =
+        "Error: " + error.message;
+
+      document.getElementById("satelliteCount").textContent =
+        "🛰 Satellite data unavailable";
+    });
+  </script>
+</body>
+</html>

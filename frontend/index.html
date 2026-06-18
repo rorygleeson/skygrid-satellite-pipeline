@@ -172,20 +172,31 @@
 
     const LIVE_UPDATE_INTERVAL_MS = 5000;
 
-    const defaultPointStyle = {
-      pixelSize: 5,
-      color: Cesium.Color.CYAN.withAlpha(0.65),
-      outlineColor: Cesium.Color.TRANSPARENT,
-      outlineWidth: 0
-    };
+const isMobileDevice = window.innerWidth < 768;
 
-    const selectedPointStyle = {
-      pixelSize: 16,
-      color: Cesium.Color.WHITE,
-      outlineColor: Cesium.Color.YELLOW,
-      outlineWidth: 3
-    };
+const satelliteScaleByDistance = isMobileDevice
+  ? new Cesium.NearFarScalar(
+      500000, 5.0,
+      30000000, 0.25
+    )
+  : new Cesium.NearFarScalar(
+      2000000, 1.2,
+      30000000, 0.25
+    );
 
+const defaultPointStyle = {
+  pixelSize: 5,
+  color: Cesium.Color.CYAN.withAlpha(0.65),
+  outlineColor: Cesium.Color.TRANSPARENT,
+  outlineWidth: 0
+};
+
+const selectedPointStyle = {
+  pixelSize: 16,
+  color: Cesium.Color.WHITE,
+  outlineColor: Cesium.Color.YELLOW,
+  outlineWidth: 3
+};
     async function loadStarlinkData() {
       const response = await fetch("/data/starlink/latest/starlink.json?t=" + Date.now());
 
@@ -292,10 +303,7 @@
           color: defaultPointStyle.color,
           outlineColor: defaultPointStyle.outlineColor,
           outlineWidth: defaultPointStyle.outlineWidth,
-          scaleByDistance: new Cesium.NearFarScalar(
-            500000, 4.0,
-            30000000, 0.25
-          )
+          scaleByDistance: satelliteScaleByDistance
         },
         properties: {
           satelliteData: sat,
