@@ -316,7 +316,9 @@
         );
 
       const viewer = new Cesium.Viewer("cesiumContainer", {
-        imageryProvider: imageryProvider,
+          baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+          Promise.resolve(imageryProvider)
+          ),
         animation: false,
         timeline: false,
         baseLayerPicker: false,
