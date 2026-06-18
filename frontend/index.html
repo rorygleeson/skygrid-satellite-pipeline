@@ -30,6 +30,7 @@
       color: white;
       backdrop-filter: blur(10px);
       box-shadow: 0 0 30px rgba(0, 220, 255, 0.12);
+      min-width: 260px;
     }
 
     .title {
@@ -45,8 +46,14 @@
       font-size: 13px;
     }
 
+    .metric {
+      margin-top: 12px;
+      color: #ffffff;
+      font-size: 14px;
+    }
+
     .status {
-      margin-top: 10px;
+      margin-top: 8px;
       color: #8ff7ff;
       font-size: 12px;
     }
@@ -65,10 +72,30 @@
   <div class="overlay">
     <div class="title">SKYGRID LIVE</div>
     <div class="subtitle">Starlink constellation viewer</div>
+    <div class="metric" id="satelliteCount">🛰 Loading satellites...</div>
     <div class="status" id="status">Loading Earth...</div>
   </div>
 
   <script>
+    async function loadStarlinkData() {
+      const response = await fetch("/data/starlink/latest/starlink.json?t=" + Date.now());
+
+      if (!response.ok) {
+        throw new Error("Failed to load Starlink data: HTTP " + response.status);
+      }
+
+      const satellites = await response.json();
+
+      if (!Array.isArray(satellites)) {
+        throw new Error("Starlink data was not a JSON array");
+      }
+
+      document.getElementById("satelliteCount").textContent =
+        "🛰 " + satellites.length.toLocaleString() + " satellites loaded";
+
+      return satellites;
+    }
+
     async function startSkyGrid() {
       const imageryProvider = await Cesium.ArcGisMapServerImageryProvider.fromUrl(
         "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
@@ -110,11 +137,16 @@
       });
 
       document.getElementById("status").textContent = "Earth online";
+
+      await loadStarlinkData();
+
+      document.getElementById("status").textContent = "Starlink data online";
     }
 
     startSkyGrid().catch(error => {
       console.error(error);
-      document.getElementById("status").textContent = "Failed to load globe: " + error.message;
+      document.getElementById("status").textContent = "Error: " + error.message;
+      document.getElementById("satelliteCount").textContent = "🛰 Satellite data unavailable";
     });
   </script>
 </body>
