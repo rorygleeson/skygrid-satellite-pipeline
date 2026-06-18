@@ -165,6 +165,20 @@
   <script>
     let selectedEntity = null;
 
+    const defaultPointStyle = {
+      pixelSize: 5,
+      color: Cesium.Color.CYAN.withAlpha(0.65),
+      outlineColor: Cesium.Color.TRANSPARENT,
+      outlineWidth: 0
+    };
+
+    const selectedPointStyle = {
+      pixelSize: 16,
+      color: Cesium.Color.WHITE,
+      outlineColor: Cesium.Color.YELLOW,
+      outlineWidth: 3
+    };
+
     async function loadStarlinkData() {
       const response = await fetch("/data/starlink/latest/starlink.json?t=" + Date.now());
 
@@ -234,12 +248,29 @@
       document.getElementById("detailsPanel").style.display = "block";
     }
 
+    function applyDefaultStyle(entity) {
+      if (!entity || !entity.point) return;
+
+      entity.point.pixelSize = defaultPointStyle.pixelSize;
+      entity.point.color = defaultPointStyle.color;
+      entity.point.outlineColor = defaultPointStyle.outlineColor;
+      entity.point.outlineWidth = defaultPointStyle.outlineWidth;
+    }
+
+    function applySelectedStyle(entity) {
+      if (!entity || !entity.point) return;
+
+      entity.point.pixelSize = selectedPointStyle.pixelSize;
+      entity.point.color = selectedPointStyle.color;
+      entity.point.outlineColor = selectedPointStyle.outlineColor;
+      entity.point.outlineWidth = selectedPointStyle.outlineWidth;
+    }
+
     function hideDetailsPanel() {
       document.getElementById("detailsPanel").style.display = "none";
 
       if (selectedEntity) {
-        selectedEntity.point.pixelSize = 5;
-        selectedEntity.point.color = Cesium.Color.CYAN.withAlpha(0.65);
+        applyDefaultStyle(selectedEntity);
         selectedEntity = null;
       }
     }
@@ -255,9 +286,10 @@
           position.altitudeMeters
         ),
         point: {
-          pixelSize: 5,
-          color: Cesium.Color.CYAN.withAlpha(0.65),
-          outlineWidth: 0,
+          pixelSize: defaultPointStyle.pixelSize,
+          color: defaultPointStyle.color,
+          outlineColor: defaultPointStyle.outlineColor,
+          outlineWidth: defaultPointStyle.outlineWidth,
           scaleByDistance: new Cesium.NearFarScalar(
             2000000, 1.2,
             30000000, 0.25
@@ -288,14 +320,12 @@
         }
 
         if (selectedEntity) {
-          selectedEntity.point.pixelSize = 5;
-          selectedEntity.point.color = Cesium.Color.CYAN.withAlpha(0.65);
+          applyDefaultStyle(selectedEntity);
         }
 
         selectedEntity = picked.id;
 
-        selectedEntity.point.pixelSize = 12;
-        selectedEntity.point.color = Cesium.Color.WHITE;
+        applySelectedStyle(selectedEntity);
 
         const time = viewer.clock.currentTime;
         const sat = selectedEntity.properties.satelliteData.getValue(time);
@@ -316,9 +346,9 @@
         );
 
       const viewer = new Cesium.Viewer("cesiumContainer", {
-          baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+        baseLayer: Cesium.ImageryLayer.fromProviderAsync(
           Promise.resolve(imageryProvider)
-          ),
+        ),
         animation: false,
         timeline: false,
         baseLayerPicker: false,
