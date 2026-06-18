@@ -190,8 +190,6 @@ const defaultPointStyle = {
 const selectedPointStyle = {
   pixelSize: 12,
   color: Cesium.Color.WHITE,
-  outlineColor: Cesium.Color.YELLOW,
-  outlineWidth: 3
 };
     async function loadStarlinkData() {
       const response = await fetch("/data/starlink/latest/starlink.json?t=" + Date.now());
