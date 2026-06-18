@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SkyGrid Live</title>
+
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+  <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css" />
+
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #020712;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(5, 15, 35, 0.72);
+      border: 1px solid rgba(0, 255, 255, 0.28);
+      border-radius: 12px;
+      padding: 16px 20px;
+      color: white;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 30px rgba(0, 220, 255, 0.12);
+    }
+
+    .title {
+      color: #69f3ff;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: #d0d7e2;
+      font-size: 13px;
+    }
+
+    .status {
+      margin-top: 10px;
+      color: #8ff7ff;
+      font-size: 12px;
+    }
+
+    .cesium-viewer-bottom,
+    .cesium-viewer-animationContainer,
+    .cesium-viewer-timelineContainer {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="cesiumContainer"></div>
+
+  <div class="overlay">
+    <div class="title">SKYGRID LIVE</div>
+    <div class="subtitle">Starlink constellation viewer</div>
+    <div class="status" id="status">Loading Earth...</div>
+  </div>
+
+  <script>
+    async function startSkyGrid() {
+      const imageryProvider = await Cesium.ArcGisMapServerImageryProvider.fromUrl(
+        "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
+      );
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        baseLayer: Cesium.ImageryLayer.fromProviderAsync(Promise.resolve(imageryProvider)),
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        fullscreenButton: false,
+        infoBox: false,
+        selectionIndicator: false
+      });
+
+      viewer.scene.globe.enableLighting = true;
+      viewer.scene.skyAtmosphere.show = true;
+      viewer.scene.backgroundColor = Cesium.Color.BLACK;
+
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(135, -25, 25000000)
+      });
+
+      document.getElementById("status").textContent = "Earth online";
+    }
+
+    startSkyGrid().catch(error => {
+      console.error(error);
+      document.getElementById("status").textContent = "Failed to load globe: " + error.message;
+    });
+  </script>
+</body>
+</html>
