@@ -77,7 +77,8 @@
       word-break: break-word;
     }
 
-    .close-button {
+    .close-button,
+    .live-button {
       margin-top: 14px;
       width: 100%;
       padding: 8px;
@@ -129,6 +130,7 @@
     <div class="subtitle">Starlink constellation viewer</div>
     <div class="metric" id="satelliteCount">🛰 Loading satellites...</div>
     <div class="status" id="status">Loading Earth...</div>
+    <button class="live-button" id="liveModeButton">Live Mode: Off</button>
   </div>
 
   <div class="details-panel" id="detailsPanel">
@@ -165,6 +167,8 @@
   <script>
     let selectedEntity = null;
     let satelliteEntries = [];
+    let liveModeEnabled = false;
+    let liveUpdateTimer = null;
 
     const LIVE_UPDATE_INTERVAL_MS = 5000;
 
@@ -340,6 +344,42 @@
         updatedCount.toLocaleString() + " satellites live";
     }
 
+    function setLiveMode(enabled) {
+      liveModeEnabled = enabled;
+
+      const button = document.getElementById("liveModeButton");
+
+      if (liveModeEnabled) {
+        button.textContent = "Live Mode: On";
+        document.getElementById("status").textContent = "Live mode starting...";
+
+        updateSatellitePositions();
+
+        liveUpdateTimer = setInterval(
+          updateSatellitePositions,
+          LIVE_UPDATE_INTERVAL_MS
+        );
+      } else {
+        button.textContent = "Live Mode: Off";
+
+        if (liveUpdateTimer) {
+          clearInterval(liveUpdateTimer);
+          liveUpdateTimer = null;
+        }
+
+        document.getElementById("status").textContent =
+          satelliteEntries.length.toLocaleString() + " satellites static";
+      }
+    }
+
+    function setupLiveModeButton() {
+      const button = document.getElementById("liveModeButton");
+
+      button.addEventListener("click", function () {
+        setLiveMode(!liveModeEnabled);
+      });
+    }
+
     function setupClickHandler(viewer) {
       const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 
@@ -376,6 +416,8 @@
         throw new Error("satellite.js failed to load");
       }
 
+      setupLiveModeButton();
+
       const imageryProvider =
         await Cesium.ArcGisMapServerImageryProvider.fromUrl(
           "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
@@ -405,19 +447,6 @@
         destination: Cesium.Cartesian3.fromDegrees(135, -25, 25000000)
       });
 
-      let lastTime = Date.now();
-
-//      viewer.clock.onTick.addEventListener(function () {
-//        const now = Date.now();
-//       const deltaSeconds = (now - lastTime) / 1000;
-//        lastTime = now;
-
-//        viewer.scene.camera.rotate(
-//          Cesium.Cartesian3.UNIT_Z,
-//          -0.008 * deltaSeconds
-//        );
-//      });
-
       document.getElementById("status").textContent = "Earth online";
 
       const satellites = await loadStarlinkData();
@@ -436,9 +465,7 @@
       setupClickHandler(viewer);
 
       document.getElementById("status").textContent =
-        plottedCount.toLocaleString() + " satellites online";
-
-      setInterval(updateSatellitePositions, LIVE_UPDATE_INTERVAL_MS);
+        plottedCount.toLocaleString() + " satellites static";
     }
 
     startSkyGrid().catch(error => {
