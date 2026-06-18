@@ -172,17 +172,13 @@
 
     const LIVE_UPDATE_INTERVAL_MS = 5000;
 
-const isMobileDevice = window.innerWidth < 768;
 
-const satelliteScaleByDistance = isMobileDevice
-  ? new Cesium.NearFarScalar(
-      500000, 5.0,
-      30000000, 0.25
-    )
-  : new Cesium.NearFarScalar(
-      2000000, 1.2,
-      30000000, 0.25
-    );
+  const satelliteScaleByDistance = new Cesium.NearFarScalar(
+    500000,
+    4.0,
+    30000000,
+    0.25
+  );
 
 const defaultPointStyle = {
   pixelSize: 5,
