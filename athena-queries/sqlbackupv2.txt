@@ -1,0 +1,162 @@
+CREATE VIEW skygrid_analytics.vw_daily_story_candidates AS
+WITH
+  latest_summary AS (
+   SELECT *
+   FROM
+     vw_daily_constellation_summary
+   ORDER BY collection_time DESC
+   LIMIT 1
+) 
+, population AS (
+   SELECT unique_satellite_count total_satellites
+   FROM
+     latest_summary
+) 
+, top_movers AS (
+   SELECT *
+   FROM
+     vw_biggest_altitude_movers
+   ORDER BY absolute_altitude_change_km DESC
+   LIMIT 10
+) 
+, reentry_watch AS (
+   SELECT *
+   FROM
+     vw_reentry_watch
+   WHERE (reentry_band IN ('below_200_km', 'below_250_km'))
+   ORDER BY skygrid_altitude_km ASC
+) 
+, low_altitude AS (
+   SELECT *
+   FROM
+     vw_low_altitude_watchlist
+   LIMIT 10
+) 
+, top_cohorts AS (
+   SELECT *
+   FROM
+     vw_launch_cohort_summary
+   ORDER BY satellite_count DESC
+   LIMIT 10
+) 
+, oldest_active AS (
+   SELECT *
+   FROM
+     vw_oldest_active_satellites
+   LIMIT 5
+) 
+, newest_launches AS (
+   SELECT *
+   FROM
+     vw_newest_launches_watchlist
+   LIMIT 5
+) 
+, orbit_bands AS (
+   SELECT *
+   FROM
+     vw_orbit_band_distribution
+) 
+SELECT
+  'summary' story_type
+, 100 priority
+, 'full latest snapshot summary' selection_scope
+, p.total_satellites population_size
+, 'latest constellation summary' evidence_scope
+, null object_name
+, null norad_cat_id
+, CONCAT('Latest snapshot contains ', CAST(unique_satellite_count AS varchar), ' Starlink satellites') headline_hint
+, CONCAT('avg_altitude_km=', CAST(avg_altitude_km AS varchar), ', min_altitude_km=', CAST(min_altitude_km AS varchar), ', max_altitude_km=', CAST(max_altitude_km AS varchar), ', positions_available=', CAST(positions_available AS varchar)) evidence_detail
+FROM
+  (latest_summary s
+CROSS JOIN population p)
+UNION ALL SELECT
+  'reentry_watch'
+, 95
+, 'satellites below 250 km from latest snapshot'
+, p.total_satellites
+, 'below 200 km and below 250 km low-altitude reentry watch candidates'
+, object_name
+, norad_cat_id
+, CONCAT(object_name, ' is on reentry watch at ', CAST(skygrid_altitude_km AS varchar), ' km')
+, CONCAT('reentry_band=', reentry_band, ', launch_date=', COALESCE(launch_date, 'unknown'), ', apogee=', CAST(apogee AS varchar), ', perigee=', CAST(perigee AS varchar), ', status=', COALESCE(ops_status_code, 'unknown'), ', position_collection_time=', COALESCE(position_collection_time, 'unknown'))
+FROM
+  (reentry_watch
+CROSS JOIN population p)
+UNION ALL SELECT
+  'altitude_mover'
+, 90
+, 'top 10 altitude movers from latest-vs-previous snapshot comparison'
+, p.total_satellites
+, 'top 10 altitude movers between latest and previous snapshot'
+, object_name
+, norad_cat_id
+, CONCAT(object_name, ' changed altitude by ', CAST(altitude_change_km AS varchar), ' km')
+, CONCAT('previous_altitude_km=', CAST(previous_altitude_km AS varchar), ', latest_altitude_km=', CAST(latest_altitude_km AS varchar), ', launch_date=', COALESCE(launch_date, 'unknown'), ', status=', COALESCE(ops_status_code, 'unknown'))
+FROM
+  (top_movers
+CROSS JOIN population p)
+UNION ALL SELECT
+  'low_altitude'
+, 85
+, 'top 10 lowest-altitude satellites from latest snapshot'
+, p.total_satellites
+, 'top 10 lowest-altitude satellites in latest snapshot'
+, object_name
+, norad_cat_id
+, CONCAT(object_name, ' is low at ', CAST(skygrid_altitude_km AS varchar), ' km')
+, CONCAT('launch_date=', COALESCE(launch_date, 'unknown'), ', apogee=', CAST(apogee AS varchar), ', perigee=', CAST(perigee AS varchar), ', status=', COALESCE(ops_status_code, 'unknown'))
+FROM
+  (low_altitude
+CROSS JOIN population p)
+UNION ALL SELECT
+  'launch_cohort'
+, 75
+, 'top 10 largest launch cohorts from latest constellation'
+, p.total_satellites
+, 'top 10 largest launch cohorts in latest constellation'
+, null
+, null
+, CONCAT('Launch cohort ', launch_date, ' has ', CAST(satellite_count AS varchar), ' active satellites')
+, CONCAT('launch_site=', COALESCE(launch_site, 'unknown'), ', owner=', COALESCE(owner, 'unknown'), ', avg_altitude_km=', CAST(avg_altitude_km AS varchar))
+FROM
+  (top_cohorts
+CROSS JOIN population p)
+UNION ALL SELECT
+  'oldest_active'
+, 70
+, 'top 5 oldest active satellites from latest snapshot'
+, p.total_satellites
+, 'top 5 oldest active satellites still present in latest snapshot'
+, object_name
+, norad_cat_id
+, CONCAT(object_name, ' is among the oldest active Starlink satellites')
+, CONCAT('launch_date=', launch_date, ', age_days=', CAST(age_days AS varchar), ', altitude_km=', CAST(skygrid_altitude_km AS varchar), ', status=', COALESCE(ops_status_code, 'unknown'))
+FROM
+  (oldest_active
+CROSS JOIN population p)
+UNION ALL SELECT
+  'newest_launch'
+, 70
+, 'top 5 newest launched satellites from latest snapshot'
+, p.total_satellites
+, 'top 5 newest launched satellites in latest snapshot'
+, object_name
+, norad_cat_id
+, CONCAT(object_name, ' is from a recent launch on ', launch_date)
+, CONCAT('age_days=', CAST(age_days AS varchar), ', altitude_km=', CAST(skygrid_altitude_km AS varchar), ', status=', COALESCE(ops_status_code, 'unknown'))
+FROM
+  (newest_launches
+CROSS JOIN population p)
+UNION ALL SELECT
+  'orbit_band'
+, 60
+, 'full altitude band distribution across latest snapshot'
+, p.total_satellites
+, 'altitude band distribution across latest snapshot'
+, null
+, null
+, CONCAT(altitude_band, ' contains ', CAST(satellite_count AS varchar), ' satellites')
+, CONCAT('avg_altitude_km=', CAST(avg_altitude_km AS varchar), ', min_altitude_km=', CAST(min_altitude_km AS varchar), ', max_altitude_km=', CAST(max_altitude_km AS varchar))
+FROM
+  (orbit_bands
+CROSS JOIN population p)
