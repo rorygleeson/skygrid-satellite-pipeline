@@ -78,6 +78,7 @@
     }
 
     .close-button,
+    .news-button,
     .live-button {
       margin-top: 14px;
       width: 100%;
@@ -87,6 +88,19 @@
       border: 1px solid rgba(0, 255, 255, 0.3);
       border-radius: 8px;
       cursor: pointer;
+    }
+    .news-button {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    box-sizing: border-box;
+    font-size: 13px;
+    }
+
+    .news-button:hover,
+    .live-button:hover,
+    .close-button:hover {
+    background: rgba(0, 255, 255, 0.2);
     }
 
     .title {
@@ -130,6 +144,7 @@
     <div class="subtitle">Starlink constellation viewer</div>
     <div class="metric" id="satelliteCount">🛰 Loading satellites...</div>
     <div class="status" id="status">Loading Earth...</div>
+    <a class="news-button" href="/news.html">📰 Daily News</a>
     <button class="live-button" id="liveModeButton">Live Mode: Off</button>
   </div>
 
