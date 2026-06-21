@@ -2,15 +2,24 @@ import json
 from datetime import datetime, timezone
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from zoneinfo import ZoneInfo
 
-AGENT_RUNTIME_ARN = "arn:aws:bedrock-agentcore:us-east-1:134387458447:runtime/skygrid1-3nYW137TZj"
+AGENT_RUNTIME_ARN = (
+    "arn:aws:bedrock-agentcore:us-east-1:134387458447:runtime/skygrid1-3nYW137TZj"
+)
 BUCKET = "skygrid.io"
 
-agentcore = boto3.client("bedrock-agentcore", region_name="us-east-1")
-s3 = boto3.client("s3")
+
+BOTO_CONFIG = Config(connect_timeout=10, read_timeout=420, retries={"max_attempts": 1})
+
+agentcore = boto3.client(
+    "bedrock-agentcore", region_name="us-east-1", config=BOTO_CONFIG
+)
+
+s3 = boto3.client("s3", config=BOTO_CONFIG)
 
 
 def invoke_agent(prompt: str, session_name: str) -> dict:
@@ -63,8 +72,7 @@ def update_news_site_archive_index(run_id: str, archive_key: str, now: datetime)
     }
 
     archive_index = [
-        item for item in archive_index
-        if item.get("date") != entry["date"]
+        item for item in archive_index if item.get("date") != entry["date"]
     ]
 
     archive_index.insert(0, entry)
@@ -168,7 +176,7 @@ Return this exact JSON structure:
 Rules:
  • Create exactly 5 stories in the stories array.
  • The hero story may overlap with story 1, but it should be written as the page lead.
- • detailed_body should be 120 to 180 words per story.
+ • detailed_body should be 70 to 100 words per story.
  • Each detailed_body should:
   - explain what happened
   - explain why it matters
@@ -244,13 +252,19 @@ Avoid:
     }
 
     daily_latest_key = "published/news/latest/daily_report.json"
-    daily_archive_key = f"published/news/archive/{yyyy}/{mm}/{dd}/daily_report_{run_id}.json"
+    daily_archive_key = (
+        f"published/news/archive/{yyyy}/{mm}/{dd}/daily_report_{run_id}.json"
+    )
 
     tiktok_latest_key = "published/tiktok/latest/tiktok_package.json"
-    tiktok_archive_key = f"published/tiktok/archive/{yyyy}/{mm}/{dd}/tiktok_package_{run_id}.json"
+    tiktok_archive_key = (
+        f"published/tiktok/archive/{yyyy}/{mm}/{dd}/tiktok_package_{run_id}.json"
+    )
 
     news_site_latest_key = "published/news-site/latest/package.json"
-    news_site_archive_key = f"published/news-site/archive/{yyyy}/{mm}/{dd}/package_{run_id}.json"
+    news_site_archive_key = (
+        f"published/news-site/archive/{yyyy}/{mm}/{dd}/package_{run_id}.json"
+    )
 
     write_json(daily_latest_key, daily_output)
     write_json(daily_archive_key, daily_output)
@@ -269,14 +283,16 @@ Avoid:
 
     return {
         "statusCode": 200,
-        "body": json.dumps({
-            "message": "SkyGrid publishing complete",
-            "daily_latest": daily_latest_key,
-            "daily_archive": daily_archive_key,
-            "tiktok_latest": tiktok_latest_key,
-            "tiktok_archive": tiktok_archive_key,
-            "news_site_latest": news_site_latest_key,
-            "news_site_archive": news_site_archive_key,
-            "news_site_archive_index": news_site_archive_index_key,
-        }),
+        "body": json.dumps(
+            {
+                "message": "SkyGrid publishing complete",
+                "daily_latest": daily_latest_key,
+                "daily_archive": daily_archive_key,
+                "tiktok_latest": tiktok_latest_key,
+                "tiktok_archive": tiktok_archive_key,
+                "news_site_latest": news_site_latest_key,
+                "news_site_archive": news_site_archive_key,
+                "news_site_archive_index": news_site_archive_index_key,
+            }
+        ),
     }
