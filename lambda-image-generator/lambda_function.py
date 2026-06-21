@@ -228,28 +228,32 @@ def lambda_handler(event, context):
     jobs = build_jobs(latest_inner)
     images_written = []
 
+
     for job in jobs:
-    enhanced_prompt = (
-        job["prompt"]
-        + ", realistic aerospace photography, "
-          "cinematic space journalism, "
-          "no text, "
-          "no words, "
-          "no letters, "
-          "no numbers, "
-          "no captions, "
-          "no labels, "
-          "no branding, "
-          "no logos, "
-          "no watermark, "
-          "no charts, "
-          "no graphs, "
-          "no dashboard, "
-          "no infographic, "
-          "no HUD, "
-          "no UI, "
-          "image only"
-    )
+        enhanced_prompt = (
+            job["prompt"]
+            + ", realistic aerospace photography, "
+            "cinematic space journalism, "
+            "no text, "
+            "no words, "
+            "no letters, "
+            "no numbers, "
+            "no captions, "
+            "no labels, "
+            "no branding, "
+            "no logos, "
+            "no watermark, "
+            "no charts, "
+            "no graphs, "
+            "no dashboard, "
+            "no infographic, "
+            "no HUD, "
+            "no UI, "
+            "image only"
+        )
+
+
+
         image_bytes = generate_image(enhanced_prompt, token)
 
         latest_key = f"{latest_image_prefix}/{job['filename']}"
