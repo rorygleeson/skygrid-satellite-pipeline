@@ -64,7 +64,7 @@ def update_news_site_archive_index(run_id: str, archive_key: str, now: datetime)
 
     archive_index = [
         item for item in archive_index
-        if item.get("run_id") != run_id
+        if item.get("date") != entry["date"]
     ]
 
     archive_index.insert(0, entry)
