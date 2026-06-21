@@ -397,37 +397,90 @@ const selectedPointStyle = {
       });
     }
 
-    function setupClickHandler(viewer) {
-      const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    function findNearestSatelliteFromTap(viewer, tapPosition, maxDistancePixels) {
+  let nearestEntry = null;
+  let nearestDistance = maxDistancePixels;
 
-      handler.setInputAction(function (movement) {
-        const picked = viewer.scene.pick(movement.position);
+  for (const entry of satelliteEntries) {
+    if (!entry.entity || !entry.entity.position) continue;
 
-        if (
-          !Cesium.defined(picked) ||
-          !picked.id ||
-          !picked.id.properties ||
-          !picked.id.properties.satelliteData
-        ) {
-          hideDetailsPanel();
-          return;
-        }
+    const cartesian = entry.entity.position.getValue(viewer.clock.currentTime);
+    if (!cartesian) continue;
 
-        if (selectedEntity) {
-          applyDefaultStyle(selectedEntity);
-        }
+    const screenPosition = Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+      viewer.scene,
+      cartesian
+    );
 
-        selectedEntity = picked.id;
+    if (!screenPosition) continue;
 
-        applySelectedStyle(selectedEntity);
+    const dx = screenPosition.x - tapPosition.x;
+    const dy = screenPosition.y - tapPosition.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
 
-        const time = viewer.clock.currentTime;
-        const sat = selectedEntity.properties.satelliteData.getValue(time);
-        const position = selectedEntity.properties.calculatedPosition.getValue(time);
-
-        showDetailsPanel(sat, position);
-      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    if (distance <= nearestDistance) {
+      nearestDistance = distance;
+      nearestEntry = entry;
     }
+  }
+
+  return nearestEntry;
+}
+
+function setupClickHandler(viewer) {
+  const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+  const isTouchDevice =
+    window.matchMedia("(pointer: coarse)").matches ||
+    "ontouchstart" in window;
+
+  handler.setInputAction(function (movement) {
+
+    let picked = viewer.scene.pick(movement.position);
+    let entity = null;
+
+    if (
+      Cesium.defined(picked) &&
+      picked.id &&
+      picked.id.properties &&
+      picked.id.properties.satelliteData
+    ) {
+      entity = picked.id;
+    }
+
+    if (!entity && isTouchDevice) {
+      const nearestEntry = findNearestSatelliteFromTap(
+        viewer,
+        movement.position,
+        35
+      );
+
+      if (nearestEntry) {
+        entity = nearestEntry.entity;
+      }
+    }
+
+    if (!entity) {
+      hideDetailsPanel();
+      return;
+    }
+
+    if (selectedEntity) {
+      applyDefaultStyle(selectedEntity);
+    }
+
+    selectedEntity = entity;
+    applySelectedStyle(selectedEntity);
+
+    const time = viewer.clock.currentTime;
+    const sat = selectedEntity.properties.satelliteData.getValue(time);
+    const position = selectedEntity.properties.calculatedPosition.getValue(time);
+
+    showDetailsPanel(sat, position);
+
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+}
+    
 
     async function startSkyGrid() {
       if (typeof satellite === "undefined") {
