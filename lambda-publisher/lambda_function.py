@@ -176,7 +176,7 @@ Return this exact JSON structure:
 Rules:
  • Create exactly 5 stories in the stories array.
  • The hero story may overlap with story 1, but it should be written as the page lead.
- • detailed_body should be 70 to 100 words per story.
+ • detailed_body should be 100 to 140 words per story.
  • Each detailed_body should:
   - explain what happened
   - explain why it matters
