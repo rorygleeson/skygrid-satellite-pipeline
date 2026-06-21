@@ -166,23 +166,22 @@ Return this exact JSON structure:
 }
 
 Rules:
-- Create exactly 5 stories in the stories array.
-- The hero story may overlap with story 1, but it should be written as the page lead.
-- detailed_body should be 40 to 70 words per story.
-- short_summary should be one sentence.
-- image_prompt should describe a cinematic SkyGrid-style visual card.
-- image_prompt must not contain long paragraphs of article text.
-- Use a consistent SkyGrid visual style:
-  dark space background,
-  blue/cyan glow,
-  Earth horizon,
-  satellite imagery,
-  clean futuristic data overlays,
-  high-contrast editorial infographic style.
-- Use evidence only.
-- Do not invent causes, future outcomes, reentry predictions, satellite failures, manoeuvres, launch objectives, or operator intent.
-- Prefer "reentry watch band" over "danger zone" or "imminent reentry".
-- If evidence is a top-N subset, clearly state that in detailed_body or evidence_note.
+ • Create exactly 5 stories in the stories array.
+ • The hero story may overlap with story 1, but it should be written as the page lead.
+ • detailed_body should be 40 to 70 words per story.
+ • short_summary should be one sentence.
+ • image_prompt should describe a single compelling image suitable for AI image generation.
+ • image_prompt should be 1 to 3 sentences only.
+ • image_prompt should focus on visual elements only.
+ • image_prompt must not contain article text, headlines, captions, evidence notes, measurements, labels, telemetry, branding instructions, dashboard elements, charts, graphs, or infographic layouts.
+ • Use a consistent SkyGrid visual identity: premium space journalism aesthetic, realistic satellite imagery, blue/cyan accent colours, cinematic lighting, high contrast, futuristic aerospace visual design.
+ • The image composition, scene, camera angle, environment, and visual elements should be driven primarily by the story being illustrated.
+ • Do not request text overlays, data overlays, telemetry overlays, numeric overlays, labels, captions, branding, logos, watermarks, dashboards, charts, graphs, HUDs, UI elements, or infographic elements.
+ • The generated image should resemble a magazine-quality aerospace photograph or cinematic space scene rather than an infographic.
+ • Use evidence only.
+ • Do not invent causes, future outcomes, reentry predictions, satellite failures, manoeuvres, launch objectives, or operator intent.
+ • Prefer "reentry watch band" over "danger zone" or "imminent reentry".
+ • If evidence is a top-N subset, clearly state that in detailed_body or evidence_note.
 """
 
     daily_response = invoke_agent(daily_prompt, "daily-report")
