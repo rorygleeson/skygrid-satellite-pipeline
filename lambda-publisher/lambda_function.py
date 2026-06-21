@@ -168,7 +168,13 @@ Return this exact JSON structure:
 Rules:
  • Create exactly 5 stories in the stories array.
  • The hero story may overlap with story 1, but it should be written as the page lead.
- • detailed_body should be 40 to 70 words per story.
+ • detailed_body should be 120 to 180 words per story.
+ • Each detailed_body should:
+  - explain what happened
+  - explain why it matters
+  - provide relevant scientific or orbital context
+  - explain operational significance where appropriate
+ • Avoid simply restating evidence.
  • short_summary should be one sentence.
  • image_prompt should describe a single compelling image suitable for AI image generation.
  • image_prompt should be 1 to 3 sentences only.
@@ -178,6 +184,31 @@ Rules:
  • The image composition, scene, camera angle, environment, and visual elements should be driven primarily by the story being illustrated.
  • Do not request text overlays, data overlays, telemetry overlays, numeric overlays, labels, captions, branding, logos, watermarks, dashboards, charts, graphs, HUDs, UI elements, or infographic elements.
  • The generated image should resemble a magazine-quality aerospace photograph or cinematic space scene rather than an infographic.
+ 
+ Writing Style:
+
+• Write like a professional aerospace news publication.
+• Make stories informative, scientific, and engaging.
+• Use precise language rather than sensational language.
+• Explain the significance of observations.
+• Where appropriate, discuss atmospheric drag, orbital altitude,
+  constellation behaviour, orbit-raising activity,
+  reentry-watch conditions, and orbital mechanics concepts.
+
+• General scientific explanations are permitted.
+• Specific causes are not permitted unless present in evidence.
+
+Avoid:
+• database-style wording
+• query-style wording
+• evidence dump language
+• repetitive sentence structures
+• phrases such as:
+  - selection_scope
+  - query result
+  - priority score
+  - evidence demonstrates
+ 
  • Use evidence only.
  • Do not invent causes, future outcomes, reentry predictions, satellite failures, manoeuvres, launch objectives, or operator intent.
  • Prefer "reentry watch band" over "danger zone" or "imminent reentry".
