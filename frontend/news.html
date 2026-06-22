@@ -137,8 +137,17 @@
   }
 
   function renderNews(data, wrapper) {
-    setText("newsDate", data.subtitle || wrapper.generated_at || "SkyGrid Daily");
-    setText("newsSubtitle", data.title || "SkyGrid Daily News");
+    const reportDate = wrapper.generated_at
+  ? new Date(wrapper.generated_at).toLocaleDateString("en-AU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Australia/Melbourne"
+    })
+  : "SkyGrid Daily";
+
+setText("newsDate", reportDate);
+setText("newsSubtitle", data.subtitle || data.title || "SkyGrid Daily News");
 
     renderImage(
   document.getElementById("heroImage"),
