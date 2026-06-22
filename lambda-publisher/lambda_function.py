@@ -221,6 +221,9 @@ Avoid:
  • Do not invent causes, future outcomes, reentry predictions, satellite failures, manoeuvres, launch objectives, or operator intent.
  • Prefer "reentry watch band" over "danger zone" or "imminent reentry".
  • If evidence is a top-N subset, clearly state that in detailed_body or evidence_note.
+ • Do not include dates in title or subtitle.
+ • Subtitle should only describe the report topic.
+ • Report dates are supplied by the publisher warpper generated_at field.
 """
 
     daily_response = invoke_agent(daily_prompt, "daily-report")
