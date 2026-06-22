@@ -259,17 +259,17 @@ Avoid:
 
     daily_latest_key = "published/news/latest/daily_report.json"
     daily_archive_key = (
-        f"published/news/archive/{yyyy}/{mm}/{dd}/daily_report_{run_id}.json"
+        f"published/news/archive/{yyyy}/{mm}/{dd}/daily_report.json"
     )
 
     tiktok_latest_key = "published/tiktok/latest/tiktok_package.json"
     tiktok_archive_key = (
-        f"published/tiktok/archive/{yyyy}/{mm}/{dd}/tiktok_package_{run_id}.json"
+        f"published/tiktok/archive/{yyyy}/{mm}/{dd}/tiktok_package.json"
     )
 
     news_site_latest_key = "published/news-site/latest/package.json"
     news_site_archive_key = (
-        f"published/news-site/archive/{yyyy}/{mm}/{dd}/package_{run_id}.json"
+        f"published/news-site/archive/{yyyy}/{mm}/{dd}/package.json"
     )
 
     write_json(daily_latest_key, daily_output)
