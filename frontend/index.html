@@ -414,8 +414,20 @@ const selectedPointStyle = {
 
     if (!screenPosition) continue;
 
-    const dx = screenPosition.x - tapPosition.x;
-    const dy = screenPosition.y - tapPosition.y;
+if (
+  screenPosition.x < 0 ||
+  screenPosition.y < 0 ||
+  screenPosition.x > viewer.canvas.clientWidth ||
+  screenPosition.y > viewer.canvas.clientHeight
+) {
+  continue;
+}
+
+const dx = screenPosition.x - tapPosition.x;
+const dy = screenPosition.y - tapPosition.y;
+
+
+
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance <= nearestDistance) {
