@@ -71,7 +71,6 @@
       <div class="hero-content">
         <div class="label">Daily Lead</div>
         <div class="hero-title" id="heroHeadline">Loading...</div>
-        <div class="big-number" id="heroNumber">-</div>
         <div class="body-text" id="heroBody">Loading latest SkyGrid daily news package...</div>
         <div class="evidence" id="heroEvidence"></div>
       </div>
@@ -147,7 +146,6 @@
   "HERO DAILY NEWS IMAGE"
 );
     setText("heroHeadline", data.hero.headline);
-    setText("heroNumber", data.hero.big_number);
     setText("heroBody", data.hero.detailed_body || data.hero.short_summary);
     setText("heroEvidence", "Evidence note: " + (data.hero.evidence_note || ""));
 
@@ -173,13 +171,11 @@
       content.innerHTML = `
         <div class="label">Story ${story.story_number}</div>
         <div class="story-title"></div>
-        <div class="story-number"></div>
         <div class="body-text"></div>
         <div class="evidence"></div>
       `;
 
       content.querySelector(".story-title").textContent = story.headline || "";
-      content.querySelector(".story-number").textContent = story.big_number || "";
       content.querySelector(".body-text").textContent = story.detailed_body || story.short_summary || "";
       content.querySelector(".evidence").textContent = "Evidence note: " + (story.evidence_note || "");
 
