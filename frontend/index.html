@@ -397,15 +397,26 @@ const selectedPointStyle = {
       });
     }
 
-    function findNearestSatelliteFromTap(viewer, tapPosition, maxDistancePixels) {
+
+function findNearestSatelliteFromTap(viewer, tapPosition, maxDistancePixels) {
   let nearestEntry = null;
   let nearestDistance = maxDistancePixels;
+
+  const occluder = new Cesium.EllipsoidalOccluder(
+    viewer.scene.globe.ellipsoid,
+    viewer.camera.positionWC
+  );
 
   for (const entry of satelliteEntries) {
     if (!entry.entity || !entry.entity.position) continue;
 
     const cartesian = entry.entity.position.getValue(viewer.clock.currentTime);
     if (!cartesian) continue;
+
+    // Ignore satellites hidden behind the Earth
+    if (!occluder.isPointVisible(cartesian)) {
+      continue;
+    }
 
     const screenPosition = Cesium.SceneTransforms.wgs84ToWindowCoordinates(
       viewer.scene,
@@ -414,20 +425,17 @@ const selectedPointStyle = {
 
     if (!screenPosition) continue;
 
-if (
-  screenPosition.x < 0 ||
-  screenPosition.y < 0 ||
-  screenPosition.x > viewer.canvas.clientWidth ||
-  screenPosition.y > viewer.canvas.clientHeight
-) {
-  continue;
-}
+    if (
+      screenPosition.x < 0 ||
+      screenPosition.y < 0 ||
+      screenPosition.x > viewer.canvas.clientWidth ||
+      screenPosition.y > viewer.canvas.clientHeight
+    ) {
+      continue;
+    }
 
-const dx = screenPosition.x - tapPosition.x;
-const dy = screenPosition.y - tapPosition.y;
-
-
-
+    const dx = screenPosition.x - tapPosition.x;
+    const dy = screenPosition.y - tapPosition.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance <= nearestDistance) {
@@ -438,6 +446,17 @@ const dy = screenPosition.y - tapPosition.y;
 
   return nearestEntry;
 }
+
+
+
+
+
+
+
+
+
+
+
 
 function setupClickHandler(viewer) {
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
