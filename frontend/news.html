@@ -147,8 +147,11 @@
   : "SkyGrid Daily";
 
 setText("newsDate", reportDate);
-setText("newsSubtitle", data.subtitle || data.title || "SkyGrid Daily News");
+const cleanSubtitle = (data.subtitle || data.title || "SkyGrid Daily News")
+  .replace(/^\d{1,2}\s+[A-Za-z]+\s+\d{4}\s*[–-]\s*/, "");
 
+  
+setText("newsSubtitle", cleanSubtitle);
     renderImage(
   document.getElementById("heroImage"),
   data.hero,
