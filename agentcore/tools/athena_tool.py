@@ -16,6 +16,7 @@ def get_daily_story_candidates() -> str:
 
     query = """
     SELECT
+      story_group,
       story_type,
       priority,
       selection_scope,
@@ -26,7 +27,7 @@ def get_daily_story_candidates() -> str:
       headline_hint,
       evidence_detail
     FROM vw_daily_story_candidates
-    ORDER BY priority DESC, story_type, object_name
+    ORDER BY priority DESC, story_group, story_type, object_name
     """
 
     response = athena.start_query_execution(

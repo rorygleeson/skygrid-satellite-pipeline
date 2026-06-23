@@ -1,7 +1,38 @@
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
 .venv/
 venv/
 .env
-lambda-package.zip
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Build / deployment artifacts
+*.zip
+lambda-package.zip
+
+# Backup files
+*Old*
+*-old*
+
+# IDE
+.vscode/
+.idea/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+
+# Test / coverage
+.coverage
+.pytest_cache/
+
+# Logs
+*.log
