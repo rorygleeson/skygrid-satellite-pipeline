@@ -178,10 +178,11 @@ Rules:
  • The hero story may overlap with story 1, but it should be written as the page lead.
  • detailed_body should be 100 to 140 words per story.
  • Each detailed_body should:
-  - explain what happened
-  - explain why it matters
-  - provide relevant scientific or orbital context
-  - explain operational significance where appropriate
+    - explain what happened
+    - explain why it matters
+    - provide relevant scientific or orbital context
+    - explain scientific or observational significance where appropriate
+ • operational significance may only be discussed when directly supported by evidence
  • Avoid simply restating evidence.
  • short_summary should be one sentence.
  • image_prompt should describe a single compelling image suitable for AI image generation.
@@ -217,6 +218,28 @@ Avoid:
   - priority score
   - evidence demonstrates
  
+Editorial Selection Rules:
+
+• Prefer diversity across story subjects.
+
+• The hero story and supporting stories should cover different primary subjects whenever possible.
+
+• Once a satellite is selected as the hero story, avoid making it the primary focus of additional stories unless the evidence is uniquely significant.
+
+• Do not create multiple stories that focus on the same satellite, event, launch cohort, or evidence set.
+
+• If multiple evidence categories describe the same underlying observation, combine them into a single story rather than creating separate stories.
+
+• When selecting five stories, maximise coverage of distinct evidence categories before creating multiple stories from the same category.
+
+• Avoid repeating the same satellite as the primary subject of multiple stories unless it represents the strongest observation in multiple categories and is essential to understanding the day's evidence.
+
+• Prefer constellation-level observations, trends, milestones, launch cohorts, altitude distributions, and fleet-wide developments when sufficient evidence exists.
+
+• If two candidate stories substantially overlap, select the stronger story and replace the weaker story with evidence from a different category.
+
+
+
  • Use evidence only.
  • Do not invent causes, future outcomes, reentry predictions, satellite failures, manoeuvres, launch objectives, or operator intent.
  • Prefer "reentry watch band" over "danger zone" or "imminent reentry".
