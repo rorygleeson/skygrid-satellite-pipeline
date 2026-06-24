@@ -143,14 +143,13 @@ def set_inner_package(wrapper, inner):
 
 
 def get_archive_package_key(wrapper):
-    run_id = wrapper["run_id"]
     generated_at = wrapper["generated_at"]
 
     yyyy = generated_at[0:4]
     mm = generated_at[5:7]
     dd = generated_at[8:10]
 
-    return f"published/news-site/archive/{yyyy}/{mm}/{dd}/package_{run_id}.json"
+    return f"published/news-site/archive/{yyyy}/{mm}/{dd}/package.json"
 
 
 def build_jobs(inner):
@@ -251,7 +250,6 @@ def lambda_handler(event, context):
             "no UI, "
             "image only"
         )
-
 
 
         image_bytes = generate_image(enhanced_prompt, token)
