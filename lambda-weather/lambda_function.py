@@ -134,6 +134,18 @@ def to_float(value):
         return None
 
 
+def scale_level(prefix, value):
+    if value in (None, "", "null"):
+        return None
+
+    text = str(value).strip()
+
+    if text.upper().startswith(prefix):
+        return text.upper()
+
+    return f"{prefix}{text}"
+
+
 def latest_kp(kp_data):
     if not isinstance(kp_data, list) or not kp_data:
         return None
@@ -143,7 +155,6 @@ def latest_kp(kp_data):
     return {
         "kp_time_tag": latest.get("time_tag"),
         "kp_index": to_float(latest.get("kp_index")),
-        "kp_observed": latest.get("observed"),
     }
 
 
@@ -161,9 +172,9 @@ def extract_noaa_scales(scales_data):
     current = scales_data.get("0") or scales_data.get("current") or scales_data
 
     return {
-        "geomagnetic_storm_level": noaa_scale_value(current, "G"),
-        "radio_blackout_level": noaa_scale_value(current, "R"),
-        "radiation_storm_level": noaa_scale_value(current, "S"),
+        "geomagnetic_storm_level": scale_level("G", noaa_scale_value(current, "G")),
+        "radio_blackout_level": scale_level("R", noaa_scale_value(current, "R")),
+        "radiation_storm_level": scale_level("S", noaa_scale_value(current, "S")),
     }
 
 
