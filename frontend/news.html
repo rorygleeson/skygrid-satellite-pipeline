@@ -221,45 +221,61 @@ setText("newsSubtitle", data.title || "SkyGrid Daily News");
     }
   }
 
-  async function loadArchiveLinks() {
-    const archiveLinks = document.getElementById("archiveLinks");
+ async function loadArchiveLinks() {
+  const archiveLinks = document.getElementById("archiveLinks");
 
-    try {
-      const response = await fetch("/published/news-site/archive/index.json?t=" + Date.now());
+  try {
+    const response = await fetch("/published/news-site/archive/index.json?t=" + Date.now());
 
-      if (!response.ok) {
-        throw new Error("HTTP " + response.status);
-      }
-
-      const archiveIndex = await response.json();
-      archiveLinks.innerHTML = "";
-
-      if (!archiveIndex.length) {
-        archiveLinks.innerHTML = '<div class="archive-link">No archived reports yet</div>';
-        return;
-      }
-
-      archiveIndex.forEach((item) => {
-        const button = document.createElement("button");
-        button.className = "archive-link";
-        button.textContent = item.label || item.date || item.run_id;
-
-        button.addEventListener("click", async () => {
-          try {
-            await loadNewsPackage(item.package_key);
-          } catch (error) {
-            console.error(error);
-            alert("Could not load archived report.");
-          }
-        });
-
-        archiveLinks.appendChild(button);
-      });
-    } catch (error) {
-      console.error(error);
-      archiveLinks.innerHTML = '<div class="archive-link">Archive unavailable</div>';
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
     }
+
+    const archiveIndex = await response.json();
+    archiveLinks.innerHTML = "";
+
+    if (!archiveIndex.length) {
+      archiveLinks.innerHTML = '<div class="archive-link">No archived reports yet</div>';
+      return;
+    }
+
+    const latestResponse = await fetch("/published/news-site/latest/package.json?t=" + Date.now());
+    const latestWrapper = await latestResponse.json();
+
+    const latestDate = latestWrapper.generated_at
+      ? latestWrapper.generated_at.slice(0, 10)
+      : null;
+
+    const previousReports = archiveIndex.filter((item) => {
+      return !latestDate || item.date !== latestDate;
+    });
+
+    if (!previousReports.length) {
+      archiveLinks.innerHTML = '<div class="archive-link">No previous reports yet</div>';
+      return;
+    }
+
+    previousReports.forEach((item) => {
+      const button = document.createElement("button");
+      button.className = "archive-link";
+      button.textContent = item.label || item.date || item.run_id;
+
+      button.addEventListener("click", async () => {
+        try {
+          await loadNewsPackage(item.package_key);
+        } catch (error) {
+          console.error(error);
+          alert("Could not load archived report.");
+        }
+      });
+
+      archiveLinks.appendChild(button);
+    });
+  } catch (error) {
+    console.error(error);
+    archiveLinks.innerHTML = '<div class="archive-link">Archive unavailable</div>';
   }
+}
 
   loadLatestNews();
   loadArchiveLinks();
