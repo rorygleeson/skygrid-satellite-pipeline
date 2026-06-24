@@ -155,6 +155,7 @@ def latest_kp(kp_data):
     return {
         "kp_time_tag": latest.get("time_tag"),
         "kp_index": to_float(latest.get("kp_index")),
+        "kp_observed": latest.get("observed"),
     }
 
 
