@@ -114,7 +114,7 @@
 
   if (story.image_url) {
     const img = document.createElement("img");
-    img.src = story.image_url;
+    img.src = story.image_url + "?t=" + Date.now();
     img.alt = story.headline || fallback;
     img.loading = "lazy";
     container.appendChild(img);
