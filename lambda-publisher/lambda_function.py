@@ -183,6 +183,11 @@ Rules:
     - provide relevant scientific or orbital context
     - explain scientific or observational significance where appropriate
  • operational significance may only be discussed when directly supported by evidence
+ • Space weather evidence may be present in today's Athena evidence.
+ • Use space weather as supporting environmental context where it improves a satellite, reentry, altitude, orbit-raise, or constellation story.
+ • Prefer weaving quiet or normal space weather into an existing story or constellation summary rather than creating a standalone weather story.
+ • Create a standalone space weather story only when the evidence shows notable conditions such as elevated Kp, non-zero NOAA G/R/S levels, unusually high solar wind speed, or another clearly significant space-weather observation.
+ • Do not state or imply that space weather caused satellite movement, altitude changes, reentry behaviour, failures, manoeuvres, operational decisions, or drag changes unless that relationship is explicitly supported by evidence.
  • Avoid simply restating evidence.
  • short_summary should be one sentence.
  • image_prompt should describe a single compelling image suitable for AI image generation.
