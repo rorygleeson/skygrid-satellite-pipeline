@@ -179,25 +179,43 @@ Rules:
 • The hero story may overlap with story 1, but it should be written as the page lead.
 • detailed_body should be 100 to 140 words per story.
 • Each detailed_body should:
-- explain what happened
-- explain why it matters
-- provide relevant scientific, orbital, or space-weather context where appropriate
-- explain scientific or observational significance where appropriate
-• operational significance may only be discussed when directly supported by evidence
+
+* explain what happened
+* explain why it matters
+* provide relevant scientific, orbital, or space-weather context where appropriate
+* explain scientific or observational significance where appropriate
+  • operational significance may only be discussed when directly supported by evidence.
 
 • Space weather evidence may be present in today's Athena evidence.
 
-• If space weather evidence is present, include one brief space-weather reference somewhere in the hero story, one supporting story, or a constellation-wide story.
+• If space weather evidence is present, include at least one brief reference to it somewhere in the report. Prefer the hero story, a constellation-wide story, or another story where it provides meaningful scientific context.
 
-• Treat space weather as environmental context that helps readers understand today's orbital observations.
+• Treat space weather as environmental context that helps readers understand today's orbital observations rather than as a separate topic.
 
-• Prefer weaving quiet or normal space weather naturally into an existing satellite, reentry, altitude, orbit-raise, or constellation story rather than creating a standalone weather story.
+• Prefer weaving quiet or routine space weather naturally into an existing satellite, reentry, altitude, orbit-raise, or constellation story rather than creating a standalone weather story.
 
-• Create a standalone space weather story only when the evidence shows genuinely significant conditions such as elevated Kp, non-zero NOAA G/R/S levels, unusually high solar wind speed, or another clearly significant space-weather observation.
+• Create a standalone space weather story only when the evidence indicates genuinely significant conditions, such as elevated Kp values, NOAA storm levels above G0/R0/S0, unusually high solar wind conditions, or another clearly noteworthy space-weather event.
 
-• When space weather is referenced, include one or more relevant observations such as the Kp index, NOAA G/R/S levels, solar wind speed, or solar wind density where they add value to the story.
+• When space weather is referenced, include one or more relevant observations such as the Kp index, NOAA G/R/S levels, solar wind speed, or solar wind density where they improve scientific understanding.
 
-• Do not state or imply that space weather caused satellite movement, altitude changes, reentry behaviour, failures, manoeuvres, operational decisions, atmospheric drag changes, or any other observed satellite activity unless that relationship is explicitly supported by the returned evidence.
+• Interpret NOAA space weather observations using these general guidelines:
+
+* Kp 0–2: quiet geomagnetic conditions.
+* Kp 3: unsettled geomagnetic conditions.
+* Kp 4: active geomagnetic conditions.
+* Kp 5 or higher: geomagnetic storm conditions.
+* G0: no geomagnetic storm.
+* G1–G5: increasing geomagnetic storm severity.
+* R0: no radio blackout.
+* R1–R5: increasing radio blackout severity.
+* S0: no solar radiation storm.
+* S1–S5: increasing solar radiation storm severity.
+
+• Use these values to provide scientific context only.
+
+• Do not exaggerate routine conditions. Quiet space weather (for example Kp 0–2 or G0/R0/S0) should be described as normal background conditions rather than a significant event.
+
+• Do not state or imply that space weather caused satellite movement, altitude changes, atmospheric drag changes, reentry behaviour, failures, manoeuvres, launch objectives, operator intent, communications impacts, navigation impacts, spacecraft operations, or any other observed satellite activity unless that relationship is explicitly supported by the returned evidence.
 
 • Avoid simply restating evidence.
 • short_summary should be one sentence.
@@ -216,19 +234,16 @@ Writing Style:
 • Make stories informative, scientific, and engaging.
 • Use precise language rather than sensational language.
 • Explain the significance of observations.
-• Where appropriate, discuss atmospheric drag, orbital altitude,
-constellation behaviour, orbit-raising activity,
-reentry-watch conditions, orbital mechanics concepts,
-and current space-weather conditions when supported by evidence.
+• Where appropriate, discuss atmospheric drag, orbital altitude, constellation behaviour, orbit-raising activity, reentry-watch conditions, orbital mechanics concepts, and current NOAA space-weather conditions when supported by evidence.
 
 • General scientific explanations are permitted.
 • Specific causes are not permitted unless present in evidence.
 
 Avoid:
-• database-style wording
-• query-style wording
-• evidence dump language
-• repetitive sentence structures
+• database-style wording.
+• query-style wording.
+• evidence dump language.
+• repetitive sentence structures.
 • phrases such as:
 
 * selection_scope
@@ -239,21 +254,13 @@ Avoid:
 Editorial Selection Rules:
 
 • Prefer diversity across story subjects.
-
 • The hero story and supporting stories should cover different primary subjects whenever possible.
-
 • Once a satellite is selected as the hero story, avoid making it the primary focus of additional stories unless the evidence is uniquely significant.
-
 • Do not create multiple stories that focus on the same satellite, event, launch cohort, or evidence set.
-
 • If multiple evidence categories describe the same underlying observation, combine them into a single story rather than creating separate stories.
-
 • When selecting five stories, maximise coverage of distinct evidence categories before creating multiple stories from the same category.
-
 • Avoid repeating the same satellite as the primary subject of multiple stories unless it represents the strongest observation in multiple categories and is essential to understanding the day's evidence.
-
 • Prefer constellation-level observations, trends, milestones, launch cohorts, altitude distributions, and fleet-wide developments when sufficient evidence exists.
-
 • If two candidate stories substantially overlap, select the stronger story and replace the weaker story with evidence from a different category.
 
 • Use evidence only.
@@ -267,6 +274,8 @@ Editorial Selection Rules:
 • Good example: "Tracking 10,618 Starlink Satellites"
 • Report dates are supplied by the publisher wrapper generated_at field.
 """
+
+
 
     daily_response = invoke_agent(daily_prompt, "daily-report")
     tiktok_response = invoke_agent(tiktok_prompt, "tiktok-package")
