@@ -86,10 +86,10 @@ def update_news_site_archive_index(run_id: str, archive_key: str, now: datetime)
 
 def lambda_handler(event, context):
     now = datetime.now(timezone.utc)
-
-    yyyy = now.strftime("%Y")
-    mm = now.strftime("%m")
-    dd = now.strftime("%d")
+    melbourne_now = now.astimezone(ZoneInfo("Australia/Melbourne"))
+    yyyy = melbourne_now.strftime("%Y")
+    mm = melbourne_now.strftime("%m")
+    dd = melbourne_now.strftime("%d")
     run_id = now.strftime("%Y%m%dT%H%M%SZ")
 
     daily_prompt = """
