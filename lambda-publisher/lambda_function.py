@@ -144,70 +144,82 @@ Do not wrap the response in code fences.
 Do not include explanation outside the JSON.
 
 Create:
-- one hero story
-- exactly five concise website news stories
+
+* one hero story
+* exactly five concise website news stories
 
 Return this exact JSON structure:
 {
-  "type": "daily_news_site_package",
-  "title": "...",
-  "subtitle": "...",
-  "hero": {
-    "headline": "...",
-    "big_number": "...",
-    "short_summary": "...",
-    "detailed_body": "...",
-    "image_prompt": "...",
-    "evidence_note": "..."
-  },
-  "stories": [
-    {
-      "story_number": 1,
-      "headline": "...",
-      "big_number": "...",
-      "short_summary": "...",
-      "detailed_body": "...",
-      "image_prompt": "...",
-      "evidence_note": "..."
-    }
-  ]
+"type": "daily_news_site_package",
+"title": "...",
+"subtitle": "...",
+"hero": {
+"headline": "...",
+"big_number": "...",
+"short_summary": "...",
+"detailed_body": "...",
+"image_prompt": "...",
+"evidence_note": "..."
+},
+"stories": [
+{
+"story_number": 1,
+"headline": "...",
+"big_number": "...",
+"short_summary": "...",
+"detailed_body": "...",
+"image_prompt": "...",
+"evidence_note": "..."
+}
+]
 }
 
 Rules:
- • Create exactly 5 stories in the stories array.
- • The hero story may overlap with story 1, but it should be written as the page lead.
- • detailed_body should be 100 to 140 words per story.
- • Each detailed_body should:
-    - explain what happened
-    - explain why it matters
-    - provide relevant scientific or orbital context
-    - explain scientific or observational significance where appropriate
- • operational significance may only be discussed when directly supported by evidence
- • Space weather evidence may be present in today's Athena evidence.
- • Use space weather as supporting environmental context where it improves a satellite, reentry, altitude, orbit-raise, or constellation story.
- • Prefer weaving quiet or normal space weather into an existing story or constellation summary rather than creating a standalone weather story.
- • Create a standalone space weather story only when the evidence shows notable conditions such as elevated Kp, non-zero NOAA G/R/S levels, unusually high solar wind speed, or another clearly significant space-weather observation.
- • Do not state or imply that space weather caused satellite movement, altitude changes, reentry behaviour, failures, manoeuvres, operational decisions, or drag changes unless that relationship is explicitly supported by evidence.
- • Avoid simply restating evidence.
- • short_summary should be one sentence.
- • image_prompt should describe a single compelling image suitable for AI image generation.
- • image_prompt should be 1 to 3 sentences only.
- • image_prompt should focus on visual elements only.
- • image_prompt must not contain article text, headlines, captions, evidence notes, measurements, labels, telemetry, branding instructions, dashboard elements, charts, graphs, or infographic layouts.
- • Use a consistent SkyGrid visual identity: premium space journalism aesthetic, realistic satellite imagery, blue/cyan accent colours, cinematic lighting, high contrast, futuristic aerospace visual design.
- • The image composition, scene, camera angle, environment, and visual elements should be driven primarily by the story being illustrated.
- • Do not request text overlays, data overlays, telemetry overlays, numeric overlays, labels, captions, branding, logos, watermarks, dashboards, charts, graphs, HUDs, UI elements, or infographic elements.
- • The generated image should resemble a magazine-quality aerospace photograph or cinematic space scene rather than an infographic.
- 
- Writing Style:
+• Create exactly 5 stories in the stories array.
+• The hero story may overlap with story 1, but it should be written as the page lead.
+• detailed_body should be 100 to 140 words per story.
+• Each detailed_body should:
+- explain what happened
+- explain why it matters
+- provide relevant scientific, orbital, or space-weather context where appropriate
+- explain scientific or observational significance where appropriate
+• operational significance may only be discussed when directly supported by evidence
+
+• Space weather evidence may be present in today's Athena evidence.
+
+• If space weather evidence is present, include one brief space-weather reference somewhere in the hero story, one supporting story, or a constellation-wide story.
+
+• Treat space weather as environmental context that helps readers understand today's orbital observations.
+
+• Prefer weaving quiet or normal space weather naturally into an existing satellite, reentry, altitude, orbit-raise, or constellation story rather than creating a standalone weather story.
+
+• Create a standalone space weather story only when the evidence shows genuinely significant conditions such as elevated Kp, non-zero NOAA G/R/S levels, unusually high solar wind speed, or another clearly significant space-weather observation.
+
+• When space weather is referenced, include one or more relevant observations such as the Kp index, NOAA G/R/S levels, solar wind speed, or solar wind density where they add value to the story.
+
+• Do not state or imply that space weather caused satellite movement, altitude changes, reentry behaviour, failures, manoeuvres, operational decisions, atmospheric drag changes, or any other observed satellite activity unless that relationship is explicitly supported by the returned evidence.
+
+• Avoid simply restating evidence.
+• short_summary should be one sentence.
+• image_prompt should describe a single compelling image suitable for AI image generation.
+• image_prompt should be 1 to 3 sentences only.
+• image_prompt should focus on visual elements only.
+• image_prompt must not contain article text, headlines, captions, evidence notes, measurements, labels, telemetry, branding instructions, dashboard elements, charts, graphs, or infographic layouts.
+• Use a consistent SkyGrid visual identity: premium space journalism aesthetic, realistic satellite imagery, blue/cyan accent colours, cinematic lighting, high contrast, futuristic aerospace visual design.
+• The image composition, scene, camera angle, environment, and visual elements should be driven primarily by the story being illustrated.
+• Do not request text overlays, data overlays, telemetry overlays, numeric overlays, labels, captions, branding, logos, watermarks, dashboards, charts, graphs, HUDs, UI elements, or infographic elements.
+• The generated image should resemble a magazine-quality aerospace photograph or cinematic space scene rather than an infographic.
+
+Writing Style:
 
 • Write like a professional aerospace news publication.
 • Make stories informative, scientific, and engaging.
 • Use precise language rather than sensational language.
 • Explain the significance of observations.
 • Where appropriate, discuss atmospheric drag, orbital altitude,
-  constellation behaviour, orbit-raising activity,
-  reentry-watch conditions, and orbital mechanics concepts.
+constellation behaviour, orbit-raising activity,
+reentry-watch conditions, orbital mechanics concepts,
+and current space-weather conditions when supported by evidence.
 
 • General scientific explanations are permitted.
 • Specific causes are not permitted unless present in evidence.
@@ -218,11 +230,12 @@ Avoid:
 • evidence dump language
 • repetitive sentence structures
 • phrases such as:
-  - selection_scope
-  - query result
-  - priority score
-  - evidence demonstrates
- 
+
+* selection_scope
+* query result
+* priority score
+* evidence demonstrates
+
 Editorial Selection Rules:
 
 • Prefer diversity across story subjects.
@@ -243,18 +256,16 @@ Editorial Selection Rules:
 
 • If two candidate stories substantially overlap, select the stronger story and replace the weaker story with evidence from a different category.
 
-
-
- • Use evidence only.
- • Do not invent causes, future outcomes, reentry predictions, satellite failures, manoeuvres, launch objectives, or operator intent.
- • Prefer "reentry watch band" over "danger zone" or "imminent reentry".
- • If evidence is a top-N subset, clearly state that in detailed_body or evidence_note.
- • Do not include any calendar date in the title or subtitle.
- • The subtitle must be a short topic-only phrase.
- • The subtitle must not contain a day, month, year, or date-like text.
- • Bad example: "19 June 2026 – Tracking 10,618 Starlink Satellites"
- • Good example: "Tracking 10,618 Starlink Satellites"
- • Report dates are supplied by the publisher wrapper generated_at field.
+• Use evidence only.
+• Do not invent causes, future outcomes, reentry predictions, satellite failures, manoeuvres, launch objectives, or operator intent.
+• Prefer "reentry watch band" over "danger zone" or "imminent reentry".
+• If evidence is a top-N subset, clearly state that in detailed_body or evidence_note.
+• Do not include any calendar date in the title or subtitle.
+• The subtitle must be a short topic-only phrase.
+• The subtitle must not contain a day, month, year, or date-like text.
+• Bad example: "19 June 2026 – Tracking 10,618 Starlink Satellites"
+• Good example: "Tracking 10,618 Starlink Satellites"
+• Report dates are supplied by the publisher wrapper generated_at field.
 """
 
     daily_response = invoke_agent(daily_prompt, "daily-report")
