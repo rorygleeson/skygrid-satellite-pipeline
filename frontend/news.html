@@ -470,12 +470,51 @@
     .story-summary {
       color:#c7d8e8;
       font-size:14px;
-      line-height:1.5;
-      margin:0 0 18px;
+      line-height:1.55;
+      margin:0 0 14px;
       display:-webkit-box;
-      -webkit-line-clamp:4;
+      -webkit-line-clamp:3;
       -webkit-box-orient:vertical;
       overflow:hidden;
+    }
+
+    .story-full {
+      display:none;
+      color:#d6e4f2;
+      font-size:14px;
+      line-height:1.65;
+      margin:0 0 16px;
+      padding-top:14px;
+      border-top:1px solid rgba(255,255,255,.08);
+    }
+
+    .story-card.expanded .story-summary {
+      -webkit-line-clamp:unset;
+      overflow:visible;
+    }
+
+    .story-card.expanded .story-full {
+      display:block;
+    }
+
+    .story-toggle {
+      appearance:none;
+      border:1px solid rgba(72,234,255,.36);
+      background:rgba(0,145,255,.16);
+      color:var(--cyan);
+      padding:8px 10px;
+      border-radius:8px;
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+      cursor:pointer;
+      font-family:inherit;
+    }
+
+    .story-toggle:hover {
+      border-color:rgba(72,234,255,.82);
+      box-shadow:0 0 16px rgba(0,180,255,.16);
     }
 
     .story-footer {
@@ -603,9 +642,14 @@
       .story-thumb { width:38%; height:auto; min-height:118px; flex:0 0 38%; }
       .story-content { padding:14px; }
       .story-title { font-size:16px; margin-bottom:8px; }
-      .story-summary { display:none; }
+      .story-summary { display:-webkit-box; -webkit-line-clamp:2; font-size:13px; margin-bottom:12px; }
+      .story-full { font-size:13px; line-height:1.6; }
+      .story-card.expanded { flex-direction:column; }
+      .story-card.expanded .story-thumb { width:100%; height:210px; flex:0 0 auto; }
+      .story-card.expanded .story-summary { -webkit-line-clamp:unset; }
       .story-number-badge { width:28px; height:28px; top:10px; left:10px; }
       .story-label { font-size:10px; padding:6px 8px; }
+      .story-toggle { padding:7px 9px; font-size:10px; }
       .archive { display:block; padding:18px; }
       .archive-title { margin:0 0 12px; }
       .archive-links { display:block; overflow:visible; padding:0; }
@@ -814,14 +858,22 @@
         content.innerHTML = `
           <h3 class="story-title"></h3>
           <p class="story-summary"></p>
+          <div class="story-full"></div>
           <div class="story-footer">
-            <span class="story-label">Story ${story.story_number || ""}</span>
+            <button type="button" class="story-toggle">Read full story</button>
             <span aria-hidden="true">→</span>
           </div>
         `;
 
         content.querySelector(".story-title").textContent = story.headline || "";
         content.querySelector(".story-summary").textContent = story.short_summary || story.detailed_body || "";
+        content.querySelector(".story-full").textContent = story.detailed_body || story.short_summary || "";
+
+        const toggle = content.querySelector(".story-toggle");
+        toggle.addEventListener("click", () => {
+          const isExpanded = card.classList.toggle("expanded");
+          toggle.textContent = isExpanded ? "Collapse" : "Read full story";
+        });
 
         card.appendChild(badge);
         card.appendChild(image);
