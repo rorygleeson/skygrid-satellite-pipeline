@@ -41,14 +41,14 @@
     }
 
     .overlay {
-      top: 14px;
-      left: 14px;
-      width: 178px;
+      top: 10px;
+      left: 10px;
+      width: 142px;
       min-width: 0;
-      max-width: 178px;
-      padding: 10px;
-      border-radius: 13px;
-      box-shadow: 0 0 22px rgba(0, 220, 255, 0.12);
+      max-width: 142px;
+      padding: 7px;
+      border-radius: 10px;
+      box-shadow: 0 0 16px rgba(0, 220, 255, 0.10);
     }
 
     .details-panel {
@@ -63,16 +63,16 @@
       display: inline-block;
       text-decoration: none;
       color: inherit;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .title {
       color: #69f3ff;
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 800;
       letter-spacing: 2px;
       line-height: 1;
-      text-shadow: 0 0 16px rgba(105,243,255,.18);
+      text-shadow: 0 0 12px rgba(105,243,255,.16);
     }
 
     .subtitle {
@@ -81,8 +81,8 @@
 
     .panel-divider {
       height: 1px;
-      margin: 9px 0;
-      background: linear-gradient(90deg, rgba(105,243,255,.28), rgba(105,243,255,.03));
+      margin: 6px 0;
+      background: linear-gradient(90deg, rgba(105,243,255,.22), rgba(105,243,255,.03));
     }
 
     .metric {
@@ -90,10 +90,10 @@
     }
 
     .status {
-      margin-top: 7px;
+      margin-top: 4px;
       color: #8ff7ff;
-      font-size: 11px;
-      line-height: 1.35;
+      font-size: 10px;
+      line-height: 1.2;
       white-space: nowrap;
     }
 
@@ -119,9 +119,9 @@
     }
 
     .button-stack {
-      margin-top: 9px;
+      margin-top: 6px;
       display: grid;
-      gap: 6px;
+      gap: 4px;
     }
 
     .close-button,
@@ -129,11 +129,11 @@
     .live-button,
     .x-button {
       width: 100%;
-      padding: 7px 8px;
+      padding: 5px 6px;
       border-radius: 999px;
       cursor: pointer;
       box-sizing: border-box;
-      font-size: 11px;
+      font-size: 10px;
       text-align: center;
       text-decoration: none;
       transition: background .18s ease, border-color .18s ease, transform .18s ease;
@@ -155,10 +155,10 @@
     }
 
     .x-button {
-      background: rgba(255,255,255,.05);
+      background: rgba(255,255,255,.045);
       color: #d0d7e2;
-      border: 1px solid rgba(255,255,255,.12);
-      font-size: 11px;
+      border: 1px solid rgba(255,255,255,.11);
+      font-size: 10px;
     }
 
     .news-button:hover,
@@ -214,27 +214,27 @@
 
     @media (max-width: 760px) {
       .overlay {
-        top: 10px;
-        left: 10px;
+        top: 8px;
+        left: 8px;
         right: auto;
-        width: 168px;
+        width: 136px;
         min-width: 0;
-        max-width: 168px;
-        padding: 9px;
-        border-radius: 12px;
+        max-width: 136px;
+        padding: 6px;
+        border-radius: 10px;
       }
 
       .title {
-        font-size: 18px;
+        font-size: 15px;
       }
 
       .panel-divider {
-        margin: 8px 0;
+        margin: 5px 0;
       }
 
       .button-stack {
         grid-template-columns: 1fr;
-        gap: 5px;
+        gap: 4px;
       }
 
       .details-panel {
@@ -267,9 +267,9 @@
     <div class="status-badge"><span class="status-dot"></span><span>Live tracking defaults to 3-second updates</span></div>
 
     <div class="button-stack">
-      <a class="news-button" href="/news.html">📰 Daily News</a>
+      <a class="news-button" href="/news.html">📰 News</a>
       <button class="live-button" id="liveModeButton">Live: Starting</button>
-      <a class="x-button" href="https://x.com/SkyGrid_Space" target="_blank" rel="noopener">𝕏 @SkyGrid_Space</a>
+      <a class="x-button" href="https://x.com/SkyGrid_Space" target="_blank" rel="noopener">𝕏 Follow</a>
     </div>
   </div>
 
@@ -486,7 +486,7 @@
       }
 
       document.getElementById("status").textContent =
-        updatedCount.toLocaleString() + " satellites live";
+        "🛰 " + updatedCount.toLocaleString() + " live";
     }
 
     function setLiveMode(enabled) {
@@ -518,7 +518,7 @@
         }
 
         document.getElementById("status").textContent =
-          satelliteEntries.length.toLocaleString() + " satellites static";
+          "🛰 " + satelliteEntries.length.toLocaleString() + " static";
       }
     }
 
@@ -702,7 +702,7 @@
       setupClickHandler(viewer);
 
       document.getElementById("status").textContent =
-        plottedCount.toLocaleString() + " satellites ready";
+        "🛰 " + plottedCount.toLocaleString() + " ready";
 
       setLiveMode(true);
     }
