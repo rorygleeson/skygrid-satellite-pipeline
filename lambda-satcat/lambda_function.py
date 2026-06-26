@@ -17,6 +17,9 @@ logger.setLevel(logging.INFO)
 s3 = boto3.client("s3")
 
 
+DEFAULT_STARLINK_LOOKUP_KEY = "data/satcat/latest/starlink_lookup.json"
+
+
 def env(name: str) -> str:
     value = os.environ.get(name)
     if not value:
@@ -117,6 +120,16 @@ def write_latest(bucket: str, latest_key: str, data: bytes) -> None:
     )
 
 
+def write_json(bucket: str, key: str, data) -> None:
+    s3.put_object(
+        Bucket=bucket,
+        Key=key,
+        Body=json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8"),
+        ContentType="application/json",
+        CacheControl="max-age=3600",
+    )
+
+
 def write_analytics_jsonl_gzip(bucket: str, key: str, rows: list) -> None:
     jsonl = "\n".join(
         json.dumps(row, separators=(",", ":"))
@@ -148,6 +161,46 @@ def build_analytics_rows(satcat_rows: list, collection_time: datetime) -> list:
     return rows
 
 
+def first_value(row: dict, keys: list[str]):
+    for key in keys:
+        value = row.get(key)
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def build_starlink_lookup(satcat_rows: list) -> dict:
+    """
+    Build a compact frontend lookup keyed by NORAD catalog ID.
+
+    This is additive only: it does not alter the raw SATCAT CSV, archive files,
+    or analytics JSONL. index.html can use this file later to enrich the
+    satellite details panel.
+    """
+    lookup = {}
+
+    for row in satcat_rows:
+        object_name = first_value(row, ["object_name", "satname", "satellite_name"]) or ""
+        norad = first_value(row, ["norad_cat_id", "norad_number", "catalog_number", "satcat"])
+
+        if not norad:
+            continue
+
+        if "starlink" not in str(object_name).lower():
+            continue
+
+        lookup[str(norad)] = {
+            "object_name": object_name or None,
+            "norad_cat_id": str(norad),
+            "object_id": first_value(row, ["object_id", "international_designator", "int_des", "intl_des"]),
+            "launch_date": first_value(row, ["launch_date", "launch", "launchdate"]),
+            "launch_site": first_value(row, ["launch_site", "site", "launchsite"]),
+            "object_type": first_value(row, ["object_type", "objecttype", "type"]),
+        }
+
+    return lookup
+
+
 def lambda_handler(event, context):
     bucket = env("BUCKET_NAME")
     latest_key = env("LATEST_KEY")
@@ -157,6 +210,10 @@ def lambda_handler(event, context):
         "analytics/satcat_jsonl",
     ).rstrip("/")
     celestrak_url = env("CELESTRAK_URL")
+    starlink_lookup_key = os.environ.get(
+        "STARLINK_LOOKUP_KEY",
+        DEFAULT_STARLINK_LOOKUP_KEY,
+    )
 
     now = datetime.now(timezone.utc)
     destination_archive_key = archive_key(archive_prefix, now)
@@ -167,6 +224,7 @@ def lambda_handler(event, context):
     logger.info("Latest key: %s", latest_key)
     logger.info("Archive key: %s", destination_archive_key)
     logger.info("Analytics key: %s", destination_analytics_key)
+    logger.info("Starlink lookup key: %s", starlink_lookup_key)
 
     raw_data = fetch_celestrak(celestrak_url)
     satcat_rows = parse_satcat_csv(raw_data)
@@ -185,9 +243,13 @@ def lambda_handler(event, context):
     analytics_rows = build_analytics_rows(satcat_rows, now)
     write_analytics_jsonl_gzip(bucket, destination_analytics_key, analytics_rows)
 
+    starlink_lookup = build_starlink_lookup(satcat_rows)
+    write_json(bucket, starlink_lookup_key, starlink_lookup)
+
     logger.info(
-        "SATCAT collection complete. Rows: %s",
+        "SATCAT collection complete. Rows: %s. Starlink lookup entries: %s",
         len(analytics_rows),
+        len(starlink_lookup),
     )
 
     return {
@@ -201,6 +263,8 @@ def lambda_handler(event, context):
                 "archiveKey": destination_archive_key if archived else None,
                 "analyticsKey": destination_analytics_key,
                 "analyticsRowCount": len(analytics_rows),
+                "starlinkLookupKey": starlink_lookup_key,
+                "starlinkLookupCount": len(starlink_lookup),
             }
         ),
     }
