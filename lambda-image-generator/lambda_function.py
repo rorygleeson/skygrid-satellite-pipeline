@@ -2,14 +2,16 @@ import random
 from urllib.error import HTTPError
 import json
 import os
+import re
 import time
 import urllib.request
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import boto3
 
 
 BUCKET = "skygrid.io"
-LATEST_PACKAGE_KEY = "published/news-site/latest/package.json"
 
 MODEL_OWNER = "black-forest-labs"
 MODEL_NAME = "flux-schnell"
@@ -80,6 +82,7 @@ def http_json(url, method="GET", payload=None, token=None, max_retries=6):
 
     raise RuntimeError(f"Replicate API rate limited after {max_retries} retries") from last_error
 
+
 def download_bytes(url):
     with urllib.request.urlopen(url, timeout=120) as response:
         return response.read()
@@ -95,7 +98,7 @@ def generate_image(prompt, token):
         payload={
             "input": {
                 "prompt": prompt,
-                "num_outputs": 1
+                "num_outputs": 1,
             }
         },
     )
@@ -142,14 +145,34 @@ def set_inner_package(wrapper, inner):
     )
 
 
-def get_archive_package_key(wrapper):
-    generated_at = wrapper["generated_at"]
+def date_to_archive_package_key(date_text):
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_text or ""):
+        raise ValueError("date must use YYYY-MM-DD format")
 
-    yyyy = generated_at[0:4]
-    mm = generated_at[5:7]
-    dd = generated_at[8:10]
-
+    yyyy, mm, dd = date_text.split("-")
     return f"published/news-site/archive/{yyyy}/{mm}/{dd}/package.json"
+
+
+def today_archive_package_key():
+    melbourne_now = datetime.now(ZoneInfo("Australia/Melbourne"))
+    return date_to_archive_package_key(melbourne_now.strftime("%Y-%m-%d"))
+
+
+def resolve_package_key(event):
+    if isinstance(event, dict):
+        explicit_key = (
+            event.get("news_site_package_key")
+            or event.get("package_key")
+            or event.get("news_site_archive")
+        )
+        if explicit_key:
+            return explicit_key.lstrip("/")
+
+        date_text = event.get("date")
+        if date_text:
+            return date_to_archive_package_key(date_text)
+
+    return today_archive_package_key()
 
 
 def build_jobs(inner):
@@ -163,12 +186,14 @@ def build_jobs(inner):
 
     for story in inner["stories"]:
         story_number = story["story_number"]
-        jobs.append({
-            "name": f"story_{story_number}",
-            "prompt": story["image_prompt"],
-            "filename": f"story_{story_number}.webp",
-            "story_number": story_number,
-        })
+        jobs.append(
+            {
+                "name": f"story_{story_number}",
+                "prompt": story["image_prompt"],
+                "filename": f"story_{story_number}.webp",
+                "story_number": story_number,
+            }
+        )
 
     return jobs
 
@@ -197,36 +222,29 @@ def lambda_handler(event, context):
     if isinstance(event, dict):
         force_regenerate = bool(event.get("force_regenerate", False))
 
-    latest_wrapper = read_json_s3(LATEST_PACKAGE_KEY)
-    latest_inner = get_inner_package(latest_wrapper)
+    package_key = resolve_package_key(event)
 
-    if latest_inner.get("hero", {}).get("image_url") and not force_regenerate:
+    wrapper = read_json_s3(package_key)
+    inner = get_inner_package(wrapper)
+
+    if inner.get("hero", {}).get("image_url") and not force_regenerate:
         return {
             "statusCode": 200,
-            "body": json.dumps({
-                "message": "Images already generated. Skipped.",
-                "latest_package_key": LATEST_PACKAGE_KEY,
-            }),
+            "body": json.dumps(
+                {
+                    "message": "Images already generated. Skipped.",
+                    "package_key": package_key,
+                }
+            ),
         }
 
-    run_id = latest_wrapper["run_id"]
-    generated_at = latest_wrapper["generated_at"]
+    run_id = wrapper["run_id"]
+    package_prefix = package_key.rsplit("/", 1)[0]
+    image_prefix = f"{package_prefix}/images/{run_id}"
 
-    yyyy = generated_at[0:4]
-    mm = generated_at[5:7]
-    dd = generated_at[8:10]
-
-    archive_package_key = get_archive_package_key(latest_wrapper)
-
-    latest_image_prefix = "published/news-site/latest/images"
-    archive_image_prefix = f"published/news-site/archive/{yyyy}/{mm}/{dd}/images/{run_id}"
-
-    latest_inner_for_write = deep_copy(latest_inner)
-    archive_inner_for_write = deep_copy(latest_inner)
-
-    jobs = build_jobs(latest_inner)
+    inner_for_write = deep_copy(inner)
+    jobs = build_jobs(inner)
     images_written = []
-
 
     for job in jobs:
         enhanced_prompt = (
@@ -251,51 +269,40 @@ def lambda_handler(event, context):
             "image only"
         )
 
-
         image_bytes = generate_image(enhanced_prompt, token)
 
-        latest_key = f"{latest_image_prefix}/{job['filename']}"
-        archive_key = f"{archive_image_prefix}/{job['filename']}"
+        image_key = f"{image_prefix}/{job['filename']}"
 
         s3.put_object(
             Bucket=BUCKET,
-            Key=latest_key,
+            Key=image_key,
             Body=image_bytes,
             ContentType="image/webp",
         )
 
-        s3.put_object(
-            Bucket=BUCKET,
-            Key=archive_key,
-            Body=image_bytes,
-            ContentType="image/webp",
+        apply_image_url(inner_for_write, job, "/" + image_key)
+
+        images_written.append(
+            {
+                "name": job["name"],
+                "image_key": image_key,
+            }
         )
 
-        apply_image_url(latest_inner_for_write, job, "/" + latest_key)
-        apply_image_url(archive_inner_for_write, job, "/" + archive_key)
+    wrapper_for_write = deep_copy(wrapper)
+    set_inner_package(wrapper_for_write, inner_for_write)
 
-        images_written.append({
-            "name": job["name"],
-            "latest_key": latest_key,
-            "archive_key": archive_key,
-        })
-
-    latest_wrapper_for_write = deep_copy(latest_wrapper)
-    archive_wrapper_for_write = deep_copy(latest_wrapper)
-
-    set_inner_package(latest_wrapper_for_write, latest_inner_for_write)
-    set_inner_package(archive_wrapper_for_write, archive_inner_for_write)
-
-    write_json_s3(LATEST_PACKAGE_KEY, latest_wrapper_for_write)
-    write_json_s3(archive_package_key, archive_wrapper_for_write)
+    write_json_s3(package_key, wrapper_for_write)
 
     return {
         "statusCode": 200,
-        "body": json.dumps({
-            "message": "SkyGrid news-site images generated",
-            "model": f"{MODEL_OWNER}/{MODEL_NAME}",
-            "latest_package_key": LATEST_PACKAGE_KEY,
-            "archive_package_key": archive_package_key,
-            "images_written": images_written,
-        }),
+        "body": json.dumps(
+            {
+                "message": "SkyGrid news-site images generated",
+                "model": f"{MODEL_OWNER}/{MODEL_NAME}",
+                "package_key": package_key,
+                "image_prefix": image_prefix,
+                "images_written": images_written,
+            }
+        ),
     }
