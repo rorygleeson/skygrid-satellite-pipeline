@@ -282,6 +282,31 @@
     </div>
 
     <div class="detail-row">
+      <div class="detail-label">Launch Date</div>
+      <div class="detail-value" id="detailsLaunchDate">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Launch Age</div>
+      <div class="detail-value" id="detailsLaunchAge">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Launch Site</div>
+      <div class="detail-value" id="detailsLaunchSite">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Object ID</div>
+      <div class="detail-value" id="detailsObjectId">-</div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-label">Object Type</div>
+      <div class="detail-value" id="detailsObjectType">-</div>
+    </div>
+
+    <div class="detail-row">
       <div class="detail-label">Altitude</div>
       <div class="detail-value" id="detailsAltitude">-</div>
     </div>
@@ -307,6 +332,7 @@
   <script>
     let selectedEntity = null;
     let satelliteEntries = [];
+    let satcatLookup = {};
     let liveModeEnabled = false;
     let liveUpdateTimer = null;
     let spinEnabled = true;
@@ -349,6 +375,63 @@
       return satellites;
     }
 
+    async function loadSatcatLookup() {
+      try {
+        const response = await fetch("/data/satcat/latest/starlink_lookup.json?t=" + Date.now());
+
+        if (!response.ok) {
+          throw new Error("Failed to load SATCAT lookup: HTTP " + response.status);
+        }
+
+        satcatLookup = await response.json();
+        console.log("Loaded SATCAT lookup entries:", Object.keys(satcatLookup).length);
+      } catch (error) {
+        satcatLookup = {};
+        console.warn("SATCAT lookup unavailable. Launch metadata will be hidden.", error);
+      }
+    }
+
+    function getSatcatMetadata(sat) {
+      const norad = sat && sat.NORAD_CAT_ID !== undefined && sat.NORAD_CAT_ID !== null
+        ? String(sat.NORAD_CAT_ID)
+        : "";
+
+      if (!norad) return {};
+      return satcatLookup[norad] || {};
+    }
+
+    function formatLaunchDate(value) {
+      if (!value) return "-";
+
+      const date = new Date(value + "T00:00:00Z");
+
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+
+      return date.toLocaleDateString("en-AU", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC"
+      });
+    }
+
+    function calculateLaunchAge(value) {
+      if (!value) return "-";
+
+      const launchDate = new Date(value + "T00:00:00Z");
+
+      if (Number.isNaN(launchDate.getTime())) {
+        return "-";
+      }
+
+      const now = new Date();
+      const ageDays = Math.max(0, Math.floor((now - launchDate) / 86400000));
+
+      return ageDays.toLocaleString() + " days";
+    }
+
     function calculateSatellitePositionFromSatrec(satrec) {
       const now = new Date();
       const positionAndVelocity = satellite.propagate(satrec, now);
@@ -381,6 +464,23 @@
 
       document.getElementById("detailsNorad").textContent =
         sat.NORAD_CAT_ID || "-";
+
+      const satcat = getSatcatMetadata(sat);
+
+      document.getElementById("detailsLaunchDate").textContent =
+        formatLaunchDate(satcat.launch_date);
+
+      document.getElementById("detailsLaunchAge").textContent =
+        calculateLaunchAge(satcat.launch_date);
+
+      document.getElementById("detailsLaunchSite").textContent =
+        satcat.launch_site || "-";
+
+      document.getElementById("detailsObjectId").textContent =
+        satcat.object_id || sat.OBJECT_ID || "-";
+
+      document.getElementById("detailsObjectType").textContent =
+        satcat.object_type || "-";
 
       document.getElementById("detailsAltitude").textContent =
         formatNumber(position.altitudeMeters / 1000, 1) + " km";
@@ -651,6 +751,7 @@
       }
 
       setupLiveModeButton();
+      loadSatcatLookup();
 
       const imageryProvider =
         await Cesium.ArcGisMapServerImageryProvider.fromUrl(
