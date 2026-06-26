@@ -91,6 +91,9 @@
   </main>
 
  <script>
+  const LATEST_PACKAGE_KEY = "published/news-site/latest/package.json";
+  const ARCHIVE_PACKAGE_PREFIX = "published/news-site/archive";
+
   function stripCodeFence(text) {
     return text
       .replace(/^```json\s*/i, "")
@@ -109,74 +112,81 @@
     document.getElementById(id).textContent = value || "";
   }
 
-  function renderImage(container, story, fallback) {
-  container.innerHTML = "";
-
-  if (story.image_url) {
-    const img = document.createElement("img");
-    img.src = story.image_url + "?t=" + Date.now();
-    img.alt = story.headline || fallback;
-    img.loading = "lazy";
-    container.appendChild(img);
-    return;
-  }
-
-  container.textContent = story.image_prompt
-    ? story.image_prompt.substring(0, 180) + "..."
-    : fallback;
-}
-
-
-
-
-
-
-
   function toFetchPath(key) {
     return key.startsWith("/") ? key : "/" + key;
   }
 
+  function isValidDateParam(dateText) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(dateText || "");
+  }
+
+  function archiveKeyFromDate(dateText) {
+    const [yyyy, mm, dd] = dateText.split("-");
+    return `${ARCHIVE_PACKAGE_PREFIX}/${yyyy}/${mm}/${dd}/package.json`;
+  }
+
+  function getRequestedDate() {
+    const params = new URLSearchParams(window.location.search);
+    const date = params.get("date");
+    return isValidDateParam(date) ? date : null;
+  }
+
+  function addCacheBuster(path) {
+    const separator = path.includes("?") ? "&" : "?";
+    return path + separator + "t=" + Date.now();
+  }
+
+  function renderImage(container, story, fallback) {
+    container.innerHTML = "";
+
+    if (story?.image_url) {
+      const img = document.createElement("img");
+      img.src = addCacheBuster(story.image_url);
+      img.alt = story.headline || fallback;
+      img.loading = "lazy";
+      container.appendChild(img);
+      return;
+    }
+
+    container.textContent = story?.image_prompt
+      ? story.image_prompt.substring(0, 180) + "..."
+      : fallback;
+  }
+
   function renderNews(data, wrapper) {
     const reportDate = wrapper.generated_at
-  ? new Date(wrapper.generated_at).toLocaleDateString("en-AU", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      timeZone: "Australia/Melbourne"
-    })
-  : "SkyGrid Daily";
+      ? new Date(wrapper.generated_at).toLocaleDateString("en-AU", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          timeZone: "Australia/Melbourne"
+        })
+      : "SkyGrid Daily";
 
-setText("newsDate", reportDate);
-setText("newsSubtitle", data.title || "SkyGrid Daily News");
-
-
-
-
+    setText("newsDate", reportDate);
+    setText("newsSubtitle", data.title || "SkyGrid Daily News");
 
     renderImage(
-  document.getElementById("heroImage"),
-  data.hero,
-  "HERO DAILY NEWS IMAGE"
-);
-    setText("heroHeadline", data.hero.headline);
-    setText("heroBody", data.hero.detailed_body || data.hero.short_summary);
-    setText("heroEvidence", "Evidence note: " + (data.hero.evidence_note || ""));
+      document.getElementById("heroImage"),
+      data.hero,
+      "HERO DAILY NEWS IMAGE"
+    );
+
+    setText("heroHeadline", data.hero?.headline || "SkyGrid Daily News");
+    setText("heroBody", data.hero?.detailed_body || data.hero?.short_summary || "");
+    setText("heroEvidence", "Evidence note: " + (data.hero?.evidence_note || ""));
 
     const storiesContainer = document.getElementById("stories");
     storiesContainer.innerHTML = "";
 
-    data.stories.forEach((story) => {
+    (data.stories || []).forEach((story) => {
       const section = document.createElement("section");
       section.className = "story";
 
       const image = document.createElement("div");
       image.className = "story-image";
-      
-      renderImage(
-      image,
-      story,
-      "STORY IMAGE"
-      );
+
+      renderImage(image, story, "STORY IMAGE");
 
       const content = document.createElement("div");
       content.className = "story-content";
@@ -199,7 +209,7 @@ setText("newsSubtitle", data.title || "SkyGrid Daily News");
   }
 
   async function loadNewsPackage(key) {
-    const response = await fetch(toFetchPath(key) + "?t=" + Date.now());
+    const response = await fetch(addCacheBuster(toFetchPath(key)));
 
     if (!response.ok) {
       throw new Error("HTTP " + response.status);
@@ -211,75 +221,69 @@ setText("newsSubtitle", data.title || "SkyGrid Daily News");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function loadLatestNews() {
+  async function loadInitialNews() {
+    const requestedDate = getRequestedDate();
+    const packageKey = requestedDate
+      ? archiveKeyFromDate(requestedDate)
+      : LATEST_PACKAGE_KEY;
+
     try {
-      await loadNewsPackage("published/news-site/latest/package.json");
+      await loadNewsPackage(packageKey);
     } catch (error) {
       console.error(error);
+
+      if (requestedDate) {
+        setText("heroHeadline", "SkyGrid archived report unavailable");
+        setText("heroBody", `Could not load archived report for ${requestedDate}.`);
+        setText("newsSubtitle", "Archive report unavailable");
+        return;
+      }
+
       setText("heroHeadline", "SkyGrid Daily News unavailable");
-      setText("heroBody", "Could not load published/news-site/latest/package.json");
+      setText("heroBody", `Could not load ${LATEST_PACKAGE_KEY}`);
+      setText("newsSubtitle", "Latest report unavailable");
     }
   }
 
- async function loadArchiveLinks() {
-  const archiveLinks = document.getElementById("archiveLinks");
+  async function loadArchiveLinks() {
+    const archiveLinks = document.getElementById("archiveLinks");
 
-  try {
-    const response = await fetch("/published/news-site/archive/index.json?t=" + Date.now());
+    try {
+      const response = await fetch(addCacheBuster("/published/news-site/archive/index.json"));
 
-    if (!response.ok) {
-      throw new Error("HTTP " + response.status);
-    }
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status);
+      }
 
-    const archiveIndex = await response.json();
-    archiveLinks.innerHTML = "";
+      const archiveIndex = await response.json();
+      archiveLinks.innerHTML = "";
 
-    if (!archiveIndex.length) {
-      archiveLinks.innerHTML = '<div class="archive-link">No archived reports yet</div>';
-      return;
-    }
+      if (!archiveIndex.length) {
+        archiveLinks.innerHTML = '<div class="archive-link">No archived reports yet</div>';
+        return;
+      }
 
-    const latestResponse = await fetch("/published/news-site/latest/package.json?t=" + Date.now());
-    const latestWrapper = await latestResponse.json();
+      const currentDate = getRequestedDate();
 
-    const latestDate = latestWrapper.generated_at
-  ?   new Date(latestWrapper.generated_at).toLocaleDateString("en-CA", {
-      timeZone: "Australia/Melbourne"
-    })
-  : null;
+      archiveIndex.forEach((item) => {
+        const link = document.createElement("a");
+        link.className = "archive-link";
+        link.href = item.date ? `/news.html?date=${encodeURIComponent(item.date)}` : "#";
+        link.textContent = item.label || item.date || item.run_id;
 
-    const previousReports = archiveIndex.filter((item) => {
-      return !latestDate || item.date !== latestDate;
-    });
-
-    if (!previousReports.length) {
-      archiveLinks.innerHTML = '<div class="archive-link">No previous reports yet</div>';
-      return;
-    }
-
-    previousReports.forEach((item) => {
-      const button = document.createElement("button");
-      button.className = "archive-link";
-      button.textContent = item.label || item.date || item.run_id;
-
-      button.addEventListener("click", async () => {
-        try {
-          await loadNewsPackage(item.package_key);
-        } catch (error) {
-          console.error(error);
-          alert("Could not load archived report.");
+        if (item.date && item.date === currentDate) {
+          link.textContent = `${link.textContent} • Current`;
         }
+
+        archiveLinks.appendChild(link);
       });
-
-      archiveLinks.appendChild(button);
-    });
-  } catch (error) {
-    console.error(error);
-    archiveLinks.innerHTML = '<div class="archive-link">Archive unavailable</div>';
+    } catch (error) {
+      console.error(error);
+      archiveLinks.innerHTML = '<div class="archive-link">Archive unavailable</div>';
+    }
   }
-}
 
-  loadLatestNews();
+  loadInitialNews();
   loadArchiveLinks();
 </script>
 </body>
