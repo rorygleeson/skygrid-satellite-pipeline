@@ -5,304 +5,901 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SkyGrid Daily News</title>
   <style>
-    html, body { margin:0; padding:0; background:#020712; color:white; font-family:Arial, Helvetica, sans-serif; }
-    body { min-height:100vh; background:radial-gradient(circle at top left, rgba(0,255,255,.12), transparent 35%), radial-gradient(circle at top right, rgba(40,90,255,.12), transparent 35%), #020712; }
-    .page { max-width:1180px; margin:0 auto; padding:24px; }
-    .header { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:32px; }
-    .logo { text-decoration:none; color:white; }
-    .logo-main { color:#69f3ff; font-size:34px; font-weight:bold; letter-spacing:3px; }
-    .logo-sub { margin-top:4px; color:#d0d7e2; font-size:14px; letter-spacing:1px; text-transform:uppercase; }
-    .meta { text-align:right; color:#9fb6c8; font-size:14px; line-height:1.6; }
-    .hero, .story, .archive { border:1px solid rgba(0,255,255,.24); border-radius:16px; background:rgba(5,15,35,.72); box-shadow:0 0 32px rgba(0,220,255,.12); backdrop-filter:blur(10px); overflow:hidden; }
-    .hero { margin-bottom:34px; }
-    .hero-image { height:540px; display:flex; align-items:center; justify-content:center; text-align:center; padding:24px; background:linear-gradient(135deg, rgba(0,255,255,.18), rgba(0,0,0,.45)), radial-gradient(circle, rgba(105,243,255,.16), transparent 45%); color:#69f3ff; font-size:26px; font-weight:bold; letter-spacing:2px; }
-    .hero-image img,
-      .story-image img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        display: block;
+    :root {
+      --bg:#020712;
+      --panel:#061224;
+      --panel2:#071a31;
+      --line:rgba(0,190,255,.28);
+      --line2:rgba(255,255,255,.10);
+      --cyan:#48eaff;
+      --blue:#1596ff;
+      --text:#ffffff;
+      --muted:#a9bdd1;
+      --soft:#d6e4f2;
+      --green:#13e39b;
     }
-    .hero-content, .story-content { padding:28px; }
-    .label { color:#69f3ff; font-size:12px; letter-spacing:2px; text-transform:uppercase; margin-bottom:10px; }
-    .hero-title { font-size:40px; font-weight:bold; line-height:1.12; margin-bottom:14px; }
-    .big-number, .story-number { color:#69f3ff; font-weight:bold; margin-bottom:16px; }
-    .big-number { font-size:46px; }
-    .body-text { color:#d0d7e2; line-height:1.75; font-size:16px; }
-    .story { display:grid; grid-template-columns:420px 1fr; gap:24px; margin-bottom:26px; }
-    .story-image { min-height:300px; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; background:linear-gradient(135deg, rgba(0,255,255,.13), rgba(0,0,0,.42)), radial-gradient(circle, rgba(105,243,255,.10), transparent 50%); color:#69f3ff; font-weight:bold; font-size:18px; letter-spacing:1px; }
-    .story-title { font-size:28px; font-weight:bold; margin-bottom:12px; }
-    .story-number { font-size:34px; }
-    .evidence { margin-top:18px; padding-top:14px; border-top:1px solid rgba(255,255,255,.08); color:#8ff7ff; font-size:13px; line-height:1.5; }
-    .archive { margin-top:42px; padding:24px; }
-    .archive-title { color:#69f3ff; font-size:22px; font-weight:bold; margin-bottom:16px; }
-    .archive-link { display:inline-block; margin:5px; padding:10px 14px; border-radius:8px; border:1px solid rgba(0,255,255,.3); background:rgba(0,255,255,.12); color:#8ff7ff; font-size:14px; }
-    .footer { color:#66798d; font-size:12px; text-align:center; padding:34px 0 10px; }
+
+    * { box-sizing:border-box; }
+
+    html, body {
+      margin:0;
+      padding:0;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(0,180,255,.16), transparent 34%),
+        radial-gradient(circle at 82% 8%, rgba(34,88,255,.18), transparent 34%),
+        linear-gradient(180deg, #020712 0%, #031022 52%, #020712 100%);
+      color:var(--text);
+      font-family:Arial, Helvetica, sans-serif;
+    }
+
+    body::before {
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      opacity:.28;
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(255,255,255,.55) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 78% 28%, rgba(255,255,255,.45) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 47% 64%, rgba(255,255,255,.35) 0 1px, transparent 1.5px);
+      background-size:260px 260px, 340px 340px, 420px 420px;
+    }
+
+    a { color:inherit; }
+
+    .shell {
+      width:min(1480px, calc(100% - 48px));
+      margin:0 auto;
+    }
+
+    .topbar {
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:rgba(2,7,18,.84);
+      backdrop-filter:blur(18px);
+      border-bottom:1px solid rgba(72,234,255,.14);
+    }
+
+    .nav {
+      min-height:82px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:24px;
+    }
+
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:14px;
+      text-decoration:none;
+      min-width:max-content;
+    }
+
+    .brand-mark {
+      width:42px;
+      height:42px;
+      border:1px solid rgba(72,234,255,.7);
+      border-radius:50%;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(72,234,255,.9), transparent 6%),
+        radial-gradient(circle, rgba(72,234,255,.15), transparent 58%),
+        linear-gradient(135deg, rgba(21,150,255,.28), rgba(0,0,0,.2));
+      position:relative;
+      box-shadow:0 0 22px rgba(0,180,255,.22);
+      overflow:hidden;
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content:"";
+      position:absolute;
+      inset:8px 3px;
+      border:1px solid rgba(72,234,255,.42);
+      border-radius:50%;
+    }
+
+    .brand-mark::after {
+      inset:3px 10px;
+    }
+
+    .brand-main {
+      font-size:30px;
+      line-height:1;
+      font-weight:900;
+      letter-spacing:1px;
+    }
+
+    .brand-main span { color:var(--blue); }
+
+    .brand-sub {
+      margin-top:4px;
+      font-size:10px;
+      letter-spacing:1.4px;
+      color:#b6c9dd;
+      text-transform:uppercase;
+      font-weight:700;
+    }
+
+    .nav-links {
+      display:flex;
+      align-items:center;
+      gap:34px;
+      color:#c7d6e8;
+      font-size:15px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+    }
+
+    .nav-links a {
+      text-decoration:none;
+      padding:30px 0 26px;
+      border-bottom:2px solid transparent;
+    }
+
+    .nav-links a.active,
+    .nav-links a:hover {
+      color:var(--cyan);
+      border-bottom-color:var(--blue);
+    }
+
+    .primary-btn {
+      border:0;
+      border-radius:8px;
+      padding:15px 24px;
+      color:white;
+      background:linear-gradient(135deg, #0e87ff, #10b7ff);
+      text-decoration:none;
+      font-weight:800;
+      box-shadow:0 0 28px rgba(0,145,255,.28);
+      white-space:nowrap;
+    }
+
+    .primary-btn:hover { filter:brightness(1.1); }
+
+    .mobile-menu { display:none; color:white; font-size:26px; }
+
+    .page { padding:26px 0 38px; }
+
+    .mobile-title {
+      display:none;
+      margin:10px 0 18px;
+    }
+
+    .mobile-title h1 {
+      margin:0 0 8px;
+      font-size:34px;
+      letter-spacing:-.5px;
+    }
+
+    .mobile-title p {
+      margin:0;
+      color:var(--muted);
+      line-height:1.5;
+    }
+
+    .lead-grid {
+      display:grid;
+      grid-template-columns:minmax(0, 1.48fr) minmax(360px, .95fr);
+      gap:14px;
+      align-items:stretch;
+    }
+
+    .card {
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(7,24,46,.78), rgba(3,11,24,.86));
+      box-shadow:0 18px 60px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.02);
+      border-radius:10px;
+      overflow:hidden;
+    }
+
+    .hero-card {
+      min-height:430px;
+      display:grid;
+      grid-template-columns:minmax(320px, .92fr) minmax(360px, 1.08fr);
+      position:relative;
+    }
+
+    .hero-copy {
+      padding:32px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      z-index:2;
+    }
+
+    .tag {
+      display:inline-flex;
+      align-items:center;
+      width:max-content;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:7px;
+      background:rgba(21,150,255,.78);
+      color:#eaf8ff;
+      font-size:13px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+      margin-bottom:22px;
+    }
+
+    .hero-title {
+      font-size:44px;
+      line-height:1.08;
+      letter-spacing:-1.3px;
+      font-weight:900;
+      margin:0 0 22px;
+    }
+
+    .hero-summary {
+      color:#d8e6f5;
+      line-height:1.55;
+      font-size:18px;
+      margin-bottom:28px;
+      max-width:520px;
+    }
+
+    .meta-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:22px;
+      color:#c4d7e8;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .meta-item {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .meta-icon { color:var(--cyan); }
+
+    .hero-image {
+      min-height:430px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:
+        linear-gradient(90deg, rgba(2,7,18,.70), rgba(2,7,18,.05)),
+        radial-gradient(circle at 70% 28%, rgba(40,130,255,.24), transparent 40%),
+        linear-gradient(135deg, rgba(0,255,255,.13), rgba(0,0,0,.42));
+      color:var(--cyan);
+      text-align:center;
+      font-weight:900;
+      letter-spacing:1.8px;
+    }
+
+    .hero-image img,
+    .story-thumb img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .hero-image img { min-height:430px; }
+
+    .live-panel {
+      min-height:430px;
+      display:grid;
+      grid-template-rows:1fr auto;
+      position:relative;
+    }
+
+    .live-panel-main {
+      padding:30px;
+      position:relative;
+      min-height:330px;
+      overflow:hidden;
+    }
+
+    .live-panel-main::before {
+      content:"";
+      position:absolute;
+      width:260px;
+      height:260px;
+      right:-18px;
+      top:30px;
+      border-radius:50%;
+      background:
+        radial-gradient(circle at 45% 45%, rgba(65,205,255,.15), transparent 36%),
+        radial-gradient(circle at 50% 50%, transparent 40%, rgba(0,190,255,.45) 41%, transparent 42%),
+        radial-gradient(circle at 50% 50%, rgba(25,120,255,.25), rgba(0,0,0,.08) 58%, transparent 59%);
+      box-shadow:0 0 42px rgba(0,174,255,.25);
+    }
+
+    .live-panel-main::after {
+      content:"";
+      position:absolute;
+      width:290px;
+      height:155px;
+      right:-34px;
+      top:80px;
+      border:1px solid rgba(72,234,255,.55);
+      border-left-color:transparent;
+      border-right-color:transparent;
+      border-radius:50%;
+      transform:rotate(-15deg);
+      box-shadow:0 0 28px rgba(0,190,255,.16);
+    }
+
+    .live-dot {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:7px;
+      color:#5dffc4;
+      background:rgba(19,227,155,.12);
+      font-weight:900;
+      margin-bottom:20px;
+      position:relative;
+      z-index:2;
+    }
+
+    .live-dot::before {
+      content:"";
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:var(--green);
+      box-shadow:0 0 12px var(--green);
+    }
+
+    .live-panel h2 {
+      margin:0 0 16px;
+      font-size:30px;
+      line-height:1.18;
+      letter-spacing:-.5px;
+      max-width:310px;
+      position:relative;
+      z-index:2;
+    }
+
+    .live-panel p {
+      margin:0 0 24px;
+      color:#d5e5f3;
+      font-size:17px;
+      line-height:1.55;
+      max-width:295px;
+      position:relative;
+      z-index:2;
+    }
+
+    .live-panel .primary-btn {
+      display:inline-flex;
+      position:relative;
+      z-index:2;
+    }
+
+    .live-strip {
+      border-top:1px solid var(--line2);
+      display:grid;
+      grid-template-columns:repeat(4, 1fr);
+      background:rgba(2,9,20,.42);
+    }
+
+    .live-strip div {
+      padding:18px 14px;
+      border-right:1px solid var(--line2);
+      color:#d6e5f3;
+      font-size:13px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      gap:9px;
+    }
+
+    .live-strip div:last-child { border-right:0; }
+
+    .section-head {
+      display:flex;
+      align-items:end;
+      justify-content:space-between;
+      margin:24px 4px 14px;
+    }
+
+    .section-head h2 {
+      margin:0;
+      font-size:26px;
+      letter-spacing:-.4px;
+    }
+
+    .section-head .date-small {
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .stories-grid {
+      display:grid;
+      grid-template-columns:repeat(5, minmax(0, 1fr));
+      gap:12px;
+    }
+
+    .story-card {
+      min-height:320px;
+      display:flex;
+      flex-direction:column;
+      position:relative;
+      border-color:rgba(150,190,255,.22);
+      text-decoration:none;
+    }
+
+    .story-thumb {
+      height:152px;
+      background:
+        linear-gradient(135deg, rgba(0,255,255,.13), rgba(0,0,0,.45)),
+        radial-gradient(circle, rgba(105,243,255,.12), transparent 50%);
+      overflow:hidden;
+    }
+
+    .story-content { padding:18px; display:flex; flex:1; flex-direction:column; }
+
+    .story-number-badge {
+      position:absolute;
+      top:14px;
+      left:14px;
+      width:30px;
+      height:30px;
+      border-radius:50%;
+      background:linear-gradient(135deg, #0e87ff, #11b4ff);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      z-index:3;
+      box-shadow:0 0 20px rgba(0,145,255,.45);
+    }
+
+    .story-title {
+      margin:0 0 14px;
+      font-size:20px;
+      line-height:1.22;
+      letter-spacing:-.3px;
+      font-weight:900;
+    }
+
+    .story-summary {
+      color:#c7d8e8;
+      font-size:14px;
+      line-height:1.5;
+      margin:0 0 18px;
+      display:-webkit-box;
+      -webkit-line-clamp:4;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+
+    .story-footer {
+      margin-top:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      color:var(--cyan);
+      font-size:22px;
+    }
+
+    .story-label {
+      color:var(--cyan);
+      background:rgba(0,145,255,.16);
+      border:1px solid rgba(0,145,255,.24);
+      padding:7px 10px;
+      border-radius:7px;
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+    }
+
+    .archive {
+      margin-top:24px;
+      padding:14px;
+      display:flex;
+      gap:14px;
+      align-items:center;
+    }
+
+    .archive-title {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:17px;
+      font-weight:900;
+      min-width:max-content;
+      margin-right:10px;
+    }
+
+    .archive-links {
+      display:flex;
+      gap:10px;
+      align-items:center;
+      overflow-x:auto;
+      padding:2px 2px 6px;
+      scrollbar-width:thin;
+    }
+
+    .archive-link {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:max-content;
+      padding:11px 18px;
+      border-radius:7px;
+      border:1px solid rgba(120,170,230,.26);
+      background:rgba(5,15,35,.76);
+      color:#d9e9f8;
+      font-size:14px;
+      text-decoration:none;
+    }
+
+    .archive-link.current,
+    .archive-link:hover {
+      border-color:rgba(72,234,255,.76);
+      color:white;
+      box-shadow:0 0 16px rgba(0,180,255,.14);
+    }
+
+    .footer {
+      color:#8095aa;
+      font-size:13px;
+      text-align:center;
+      padding:22px 0 4px;
+    }
+
+    .error-card {
+      padding:30px;
+      color:#dcefff;
+      line-height:1.6;
+    }
+
+    @media (max-width:1180px) {
+      .nav-links { gap:20px; }
+      .lead-grid { grid-template-columns:1fr; }
+      .hero-card { grid-template-columns:1fr; }
+      .hero-image { min-height:360px; order:-1; }
+      .hero-image img { min-height:360px; }
+      .stories-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+    }
+
     @media (max-width:860px) {
-      .page { padding:18px; }
-      .header { flex-direction:column; }
-      .meta { text-align:left; }
-      .hero-image { height:310px; font-size:20px; }
-      .hero-title { font-size:30px; }
-      .big-number { font-size:36px; }
-      .story { grid-template-columns:1fr; }
-      .story-image { min-height:240px; }
-      .story-title { font-size:24px; }
+      .shell { width:min(100% - 28px, 620px); }
+      .topbar { position:relative; }
+      .nav { min-height:72px; }
+      .brand-mark { width:36px; height:36px; }
+      .brand-main { font-size:26px; }
+      .brand-sub { font-size:8px; }
+      .nav-links, .nav > .primary-btn { display:none; }
+      .mobile-menu { display:block; }
+      .mobile-title { display:block; }
+      .page { padding:18px 0 28px; }
+      .lead-grid { gap:14px; }
+      .hero-card { display:flex; flex-direction:column; min-height:0; }
+      .hero-copy { padding:22px; }
+      .hero-title { font-size:31px; letter-spacing:-.8px; }
+      .hero-summary { font-size:16px; }
+      .hero-image { min-height:260px; }
+      .hero-image img { min-height:260px; }
+      .live-panel { min-height:0; }
+      .live-panel-main { padding:22px; min-height:285px; }
+      .live-panel-main::before { width:190px; height:190px; right:-35px; top:40px; }
+      .live-panel-main::after { width:220px; right:-58px; top:83px; }
+      .live-panel h2 { font-size:24px; max-width:245px; }
+      .live-panel p { font-size:15px; max-width:220px; }
+      .live-strip { grid-template-columns:repeat(2, 1fr); }
+      .live-strip div { padding:13px 10px; font-size:12px; }
+      .section-head { margin-top:20px; }
+      .section-head h2 { font-size:22px; }
+      .section-head .date-small { display:none; }
+      .stories-grid { grid-template-columns:1fr; gap:10px; }
+      .story-card { min-height:0; flex-direction:row; align-items:stretch; }
+      .story-thumb { width:38%; height:auto; min-height:118px; flex:0 0 38%; }
+      .story-content { padding:14px; }
+      .story-title { font-size:16px; margin-bottom:8px; }
+      .story-summary { display:none; }
+      .story-number-badge { width:28px; height:28px; top:10px; left:10px; }
+      .story-label { font-size:10px; padding:6px 8px; }
+      .archive { display:block; padding:18px; }
+      .archive-title { margin:0 0 12px; }
+      .archive-links { display:block; overflow:visible; padding:0; }
+      .archive-link { display:flex; width:100%; justify-content:space-between; margin-bottom:8px; padding:13px 14px; }
+      .footer { font-size:12px; line-height:1.5; }
     }
   </style>
 </head>
 
 <body>
-  <main class="page">
-    <header class="header">
-      <a class="logo" href="/">
-        <div class="logo-main">SKYGRID</div>
+  <header class="topbar">
+    <nav class="nav shell">
+      <a class="brand" href="/">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <div class="brand-main">SKY<span>GRID</span></div>
+          <div class="brand-sub">Tracking Starlink Satellites</div>
+        </div>
       </a>
-      <div class="logo-sub">Daily News</div>
-      <div class="meta">
-        <div id="newsDate">Loading...</div>
-        <div id="newsSubtitle">Loading SkyGrid daily package...</div>
-        <div>Generated from SkyGrid daily evidence</div>
-      </div>
-    </header>
 
-    <section class="hero">
-      <div class="hero-image" id="heroImage">LOADING HERO STORY</div>
-      <div class="hero-content">
-        <div class="label">Daily Lead</div>
-        <div class="hero-title" id="heroHeadline">Loading...</div>
-        <div class="body-text" id="heroBody">Loading latest SkyGrid daily news package...</div>
-        <div class="evidence" id="heroEvidence"></div>
+      <div class="nav-links" aria-label="Main navigation">
+        <a class="active" href="/news.html">Daily News</a>
+        <a href="/">Live Globe</a>
+        <a href="#archive">Archive</a>
+        <a href="/">About</a>
       </div>
+
+      <a class="primary-btn" href="/">Launch Live Globe →</a>
+      <div class="mobile-menu" aria-hidden="true">☰</div>
+    </nav>
+  </header>
+
+  <main class="page shell">
+    <section class="mobile-title">
+      <h1>Daily News</h1>
+      <p>Evidence-based satellite intelligence from SkyGrid.</p>
+      <p id="mobileDate">Loading...</p>
     </section>
 
-    <div id="stories"></div>
+    <section class="lead-grid">
+      <article class="hero-card card">
+        <div class="hero-copy">
+          <div class="tag">Top Story</div>
+          <h1 class="hero-title" id="heroHeadline">Loading...</h1>
+          <div class="hero-summary" id="heroBody">Loading SkyGrid daily news package...</div>
+          <div class="meta-row">
+            <span class="meta-item"><span class="meta-icon">▣</span><span id="newsDate">Loading...</span></span>
+            <span class="meta-item"><span class="meta-icon">◎</span><span>SkyGrid Report</span></span>
+          </div>
+        </div>
+        <div class="hero-image" id="heroImage">LOADING HERO STORY</div>
+      </article>
 
-    <section class="archive">
-      <div class="archive-title">Previous Reports</div>
-      <div id="archiveLinks">
-        <div class="archive-link">Loading archive...</div>
+      <aside class="live-panel card">
+        <div class="live-panel-main">
+          <div class="live-dot">LIVE</div>
+          <h2>Explore the SkyGrid Live Constellation</h2>
+          <p>See every Starlink satellite tracked in real time around Earth.</p>
+          <a class="primary-btn" href="/">Launch Live Globe →</a>
+        </div>
+        <div class="live-strip">
+          <div>◎ Real-time Tracking</div>
+          <div>✣ Live Positions</div>
+          <div>◌ Orbit Visualisation</div>
+          <div>◉ Global Coverage</div>
+        </div>
+      </aside>
+    </section>
+
+    <div class="section-head">
+      <h2>Today's Top Stories</h2>
+      <div class="date-small" id="storyDate">Loading...</div>
+    </div>
+
+    <section class="stories-grid" id="stories"></section>
+
+    <section class="archive card" id="archive">
+      <div class="archive-title">▣ Browse Previous Reports</div>
+      <div class="archive-links" id="archiveLinks">
+        <a class="archive-link">Loading archive...</a>
       </div>
     </section>
 
     <div class="footer">
-      SkyGrid Daily News • Loaded from S3 published news-site package
+      Daily satellite intelligence from SkyGrid • Evidence-based space journalism
     </div>
   </main>
 
- <script>
-  
-
-  function stripCodeFence(text) {
-    return text
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/```$/i, "")
-      .trim();
-  }
-
-  function unwrapPackage(wrapper) {
-    const text = wrapper?.response?.result?.content?.[0]?.text;
-    if (!text) return wrapper;
-    return JSON.parse(stripCodeFence(text));
-  }
-
-  function setText(id, value) {
-    document.getElementById(id).textContent = value || "";
-  }
-
-  function toFetchPath(key) {
-    return key.startsWith("/") ? key : "/" + key;
-  }
-
-  function addCacheBuster(path) {
-    const separator = path.includes("?") ? "&" : "?";
-    return path + separator + "t=" + Date.now();
-  }
-
-  function isValidDateParam(dateText) {
-    return /^\d{4}-\d{2}-\d{2}$/.test(dateText || "");
-  }
-
-  function getMelbourneToday() {
-    const now = new Date();
-    const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'Australia/Melbourne',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
-    return `${parts.find(p=>p.type=='year').value}-${parts.find(p=>p.type=='month').value}-${parts.find(p=>p.type=='day').value}`;
-  }
-
-  function getRequestedDate() {
-    const params = new URLSearchParams(window.location.search);
-    const dateText = params.get("date");
-    return isValidDateParam(dateText) ? dateText : getMelbourneToday();
-  }
-
-  function archiveKeyFromDate(dateText) {
-    const [yyyy, mm, dd] = dateText.split("-");
-    return `published/news-site/archive/${yyyy}/${mm}/${dd}/package.json`;
-  }
-
-  function formatDateParamForDisplay(dateText) {
-    const [yyyy, mm, dd] = dateText.split("-").map(Number);
-    const date = new Date(yyyy, mm - 1, dd);
-    return date.toLocaleDateString("en-AU", {
-      day: "numeric",
-      month: "long",
-      year: "numeric"
-    });
-  }
-
-  function formatGeneratedAtForDisplay(generatedAt) {
-    if (!generatedAt) return "SkyGrid Daily";
-
-    return new Date(generatedAt).toLocaleDateString("en-AU", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      timeZone: "Australia/Melbourne"
-    });
-  }
-
-  function renderImage(container, story, fallback) {
-    container.innerHTML = "";
-
-    if (story.image_url) {
-      const img = document.createElement("img");
-      img.src = story.image_url + "?t=" + Date.now();
-      img.alt = story.headline || fallback;
-      img.loading = "lazy";
-      container.appendChild(img);
-      return;
+  <script>
+    function stripCodeFence(text) {
+      return text
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/```$/i, "")
+        .trim();
     }
 
-    container.textContent = story.image_prompt
-      ? story.image_prompt.substring(0, 180) + "..."
-      : fallback;
-  }
-
-  function renderNews(data, wrapper, displayDateParam) {
-    const reportDate = formatDateParamForDisplay(displayDateParam);
-
-    setText("newsDate", reportDate);
-    setText("newsSubtitle", data.title || "SkyGrid Daily News");
-
-    renderImage(
-      document.getElementById("heroImage"),
-      data.hero,
-      "HERO DAILY NEWS IMAGE"
-    );
-
-    setText("heroHeadline", data.hero.headline);
-    setText("heroBody", data.hero.detailed_body || data.hero.short_summary);
-    setText("heroEvidence", "Evidence note: " + (data.hero.evidence_note || ""));
-
-    const storiesContainer = document.getElementById("stories");
-    storiesContainer.innerHTML = "";
-
-    data.stories.forEach((story) => {
-      const section = document.createElement("section");
-      section.className = "story";
-
-      const image = document.createElement("div");
-      image.className = "story-image";
-
-      renderImage(image, story, "STORY IMAGE");
-
-      const content = document.createElement("div");
-      content.className = "story-content";
-
-      content.innerHTML = `
-        <div class="label">Story ${story.story_number}</div>
-        <div class="story-title"></div>
-        <div class="body-text"></div>
-        <div class="evidence"></div>
-      `;
-
-      content.querySelector(".story-title").textContent = story.headline || "";
-      content.querySelector(".body-text").textContent = story.detailed_body || story.short_summary || "";
-      content.querySelector(".evidence").textContent = "Evidence note: " + (story.evidence_note || "");
-
-      section.appendChild(image);
-      section.appendChild(content);
-      storiesContainer.appendChild(section);
-    });
-  }
-
-  async function loadNewsPackage(key, displayDateParam) {
-    const response = await fetch(addCacheBuster(toFetchPath(key)));
-
-    if (!response.ok) {
-      throw new Error("HTTP " + response.status);
+    function unwrapPackage(wrapper) {
+      const text = wrapper?.response?.result?.content?.[0]?.text;
+      if (!text) return wrapper;
+      return JSON.parse(stripCodeFence(text));
     }
 
-    const wrapper = await response.json();
-    const data = unwrapPackage(wrapper);
-    renderNews(data, wrapper, displayDateParam);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value || "";
+    }
 
-  async function loadInitialNews() {
-    const requestedDate = getRequestedDate();
-    const packageKey = archiveKeyFromDate(requestedDate);
+    function toFetchPath(key) {
+      return key.startsWith("/") ? key : "/" + key;
+    }
 
-    try {
-      await loadNewsPackage(packageKey, requestedDate);
-    } catch (error) {
-      console.error(error);
+    function addCacheBuster(path) {
+      const separator = path.includes("?") ? "&" : "?";
+      return path + separator + "t=" + Date.now();
+    }
 
-      if (requestedDate) {
-        setText("newsDate", formatDateParamForDisplay(requestedDate));
-        setText("newsSubtitle", "Archive report unavailable");
-        setText("heroHeadline", "SkyGrid archived report unavailable");
-        setText("heroBody", `Could not load archived report for ${requestedDate}.`);
+    function isValidDateParam(dateText) {
+      return /^\d{4}-\d{2}-\d{2}$/.test(dateText || "");
+    }
+
+    function getMelbourneToday() {
+      const now = new Date();
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone:"Australia/Melbourne",
+        year:"numeric",
+        month:"2-digit",
+        day:"2-digit"
+      }).formatToParts(now);
+
+      return `${parts.find(p => p.type === "year").value}-${parts.find(p => p.type === "month").value}-${parts.find(p => p.type === "day").value}`;
+    }
+
+    function getRequestedDate() {
+      const params = new URLSearchParams(window.location.search);
+      const dateText = params.get("date");
+      return isValidDateParam(dateText) ? dateText : getMelbourneToday();
+    }
+
+    function archiveKeyFromDate(dateText) {
+      const [yyyy, mm, dd] = dateText.split("-");
+      return `published/news-site/archive/${yyyy}/${mm}/${dd}/package.json`;
+    }
+
+    function formatDateParamForDisplay(dateText) {
+      const [yyyy, mm, dd] = dateText.split("-").map(Number);
+      const date = new Date(yyyy, mm - 1, dd);
+      return date.toLocaleDateString("en-AU", {
+        day:"numeric",
+        month:"long",
+        year:"numeric"
+      });
+    }
+
+    function renderImage(container, story, fallback) {
+      container.innerHTML = "";
+
+      if (story && story.image_url) {
+        const img = document.createElement("img");
+        img.src = story.image_url + "?t=" + Date.now();
+        img.alt = story.headline || fallback;
+        img.loading = "lazy";
+        container.appendChild(img);
         return;
       }
 
-      setText("newsSubtitle", "Report unavailable");
-      setText("heroHeadline", "SkyGrid report unavailable");
-      setText("heroBody", `Could not load archived report for ${requestedDate}.`);
+      container.textContent = story && story.image_prompt
+        ? story.image_prompt.substring(0, 160) + "..."
+        : fallback;
     }
-  }
 
-  async function loadArchiveLinks() {
-    const archiveLinks = document.getElementById("archiveLinks");
+    function renderNews(data, wrapper, displayDateParam) {
+      const reportDate = formatDateParamForDisplay(displayDateParam);
 
-    try {
-      const response = await fetch(addCacheBuster("/published/news-site/archive/index.json"));
+      setText("newsDate", reportDate);
+      setText("mobileDate", reportDate);
+      setText("storyDate", reportDate);
+
+      renderImage(
+        document.getElementById("heroImage"),
+        data.hero,
+        "HERO DAILY NEWS IMAGE"
+      );
+
+      setText("heroHeadline", data.hero.headline);
+      setText("heroBody", data.hero.short_summary || data.hero.detailed_body || "");
+
+      const storiesContainer = document.getElementById("stories");
+      storiesContainer.innerHTML = "";
+
+      data.stories.forEach((story) => {
+        const card = document.createElement("article");
+        card.className = "story-card card";
+
+        const image = document.createElement("div");
+        image.className = "story-thumb";
+        renderImage(image, story, "STORY IMAGE");
+
+        const badge = document.createElement("div");
+        badge.className = "story-number-badge";
+        badge.textContent = story.story_number || "";
+
+        const content = document.createElement("div");
+        content.className = "story-content";
+
+        content.innerHTML = `
+          <h3 class="story-title"></h3>
+          <p class="story-summary"></p>
+          <div class="story-footer">
+            <span class="story-label">Story ${story.story_number || ""}</span>
+            <span aria-hidden="true">→</span>
+          </div>
+        `;
+
+        content.querySelector(".story-title").textContent = story.headline || "";
+        content.querySelector(".story-summary").textContent = story.short_summary || story.detailed_body || "";
+
+        card.appendChild(badge);
+        card.appendChild(image);
+        card.appendChild(content);
+        storiesContainer.appendChild(card);
+      });
+    }
+
+    async function loadNewsPackage(key, displayDateParam) {
+      const response = await fetch(addCacheBuster(toFetchPath(key)));
 
       if (!response.ok) {
         throw new Error("HTTP " + response.status);
       }
 
-      const archiveIndex = await response.json();
-      archiveLinks.innerHTML = "";
+      const wrapper = await response.json();
+      const data = unwrapPackage(wrapper);
+      renderNews(data, wrapper, displayDateParam);
+      window.scrollTo({ top:0, behavior:"smooth" });
+    }
 
-      if (!archiveIndex.length) {
-        archiveLinks.innerHTML = '<div class="archive-link">No archived reports yet</div>';
-        return;
+    async function loadInitialNews() {
+      const requestedDate = getRequestedDate();
+      const packageKey = archiveKeyFromDate(requestedDate);
+
+      try {
+        await loadNewsPackage(packageKey, requestedDate);
+      } catch (error) {
+        console.error(error);
+        setText("newsDate", formatDateParamForDisplay(requestedDate));
+        setText("mobileDate", formatDateParamForDisplay(requestedDate));
+        setText("storyDate", formatDateParamForDisplay(requestedDate));
+        setText("heroHeadline", "SkyGrid archived report unavailable");
+        setText("heroBody", `Could not load archived report for ${requestedDate}.`);
+        document.getElementById("heroImage").innerHTML = `<div class="error-card">Report unavailable</div>`;
       }
+    }
 
-      const selectedDate = getRequestedDate();
+    async function loadArchiveLinks() {
+      const archiveLinks = document.getElementById("archiveLinks");
 
-      archiveIndex.forEach((item) => {
-        const link = document.createElement("a");
-        link.className = "archive-link";
-        link.href = item.date ? `/news.html?date=${encodeURIComponent(item.date)}` : "/news.html";
-        link.textContent = item.label || item.date || item.run_id;
+      try {
+        const response = await fetch(addCacheBuster("/published/news-site/archive/index.json"));
 
-        if (selectedDate && item.date === selectedDate) {
-          link.textContent = `${link.textContent} • Current`;
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
         }
 
-        archiveLinks.appendChild(link);
-      });
-    } catch (error) {
-      console.error(error);
-      archiveLinks.innerHTML = '<div class="archive-link">Archive unavailable</div>';
-    }
-  }
+        const archiveIndex = await response.json();
+        archiveLinks.innerHTML = "";
 
-  loadInitialNews();
-  loadArchiveLinks();
-</script>
+        if (!archiveIndex.length) {
+          archiveLinks.innerHTML = '<span class="archive-link">No archived reports yet</span>';
+          return;
+        }
+
+        const selectedDate = getRequestedDate();
+
+        archiveIndex.slice(0, 8).forEach((item) => {
+          const link = document.createElement("a");
+          link.className = "archive-link";
+          link.href = item.date ? `/news.html?date=${encodeURIComponent(item.date)}` : "/news.html";
+          link.textContent = item.label || item.date || item.run_id;
+
+          if (selectedDate && item.date === selectedDate) {
+            link.classList.add("current");
+          }
+
+          archiveLinks.appendChild(link);
+        });
+      } catch (error) {
+        console.error(error);
+        archiveLinks.innerHTML = '<span class="archive-link">Archive unavailable</span>';
+      }
+    }
+
+    loadInitialNews();
+    loadArchiveLinks();
+  </script>
 </body>
 </html>
