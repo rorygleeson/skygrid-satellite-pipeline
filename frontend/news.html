@@ -243,8 +243,10 @@ setText("newsSubtitle", data.title || "SkyGrid Daily News");
     const latestWrapper = await latestResponse.json();
 
     const latestDate = latestWrapper.generated_at
-      ? latestWrapper.generated_at.slice(0, 10)
-      : null;
+  ?   new Date(latestWrapper.generated_at).toLocaleDateString("en-CA", {
+      timeZone: "Australia/Melbourne"
+    })
+  : null;
 
     const previousReports = archiveIndex.filter((item) => {
       return !latestDate || item.date !== latestDate;
