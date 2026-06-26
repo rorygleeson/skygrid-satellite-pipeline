@@ -92,7 +92,6 @@
 
  <script>
   const LATEST_PACKAGE_KEY = "published/news-site/latest/package.json";
-  const ARCHIVE_PACKAGE_PREFIX = "published/news-site/archive";
 
   function stripCodeFence(text) {
     return text
@@ -116,52 +115,68 @@
     return key.startsWith("/") ? key : "/" + key;
   }
 
-  function isValidDateParam(dateText) {
-    return /^\d{4}-\d{2}-\d{2}$/.test(dateText || "");
-  }
-
-  function archiveKeyFromDate(dateText) {
-    const [yyyy, mm, dd] = dateText.split("-");
-    return `${ARCHIVE_PACKAGE_PREFIX}/${yyyy}/${mm}/${dd}/package.json`;
-  }
-
-  function getRequestedDate() {
-    const params = new URLSearchParams(window.location.search);
-    const date = params.get("date");
-    return isValidDateParam(date) ? date : null;
-  }
-
   function addCacheBuster(path) {
     const separator = path.includes("?") ? "&" : "?";
     return path + separator + "t=" + Date.now();
   }
 
+  function isValidDateParam(dateText) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(dateText || "");
+  }
+
+  function getRequestedDate() {
+    const params = new URLSearchParams(window.location.search);
+    const dateText = params.get("date");
+    return isValidDateParam(dateText) ? dateText : null;
+  }
+
+  function archiveKeyFromDate(dateText) {
+    const [yyyy, mm, dd] = dateText.split("-");
+    return `published/news-site/archive/${yyyy}/${mm}/${dd}/package.json`;
+  }
+
+  function formatDateParamForDisplay(dateText) {
+    const [yyyy, mm, dd] = dateText.split("-").map(Number);
+    const date = new Date(yyyy, mm - 1, dd);
+    return date.toLocaleDateString("en-AU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+  }
+
+  function formatGeneratedAtForDisplay(generatedAt) {
+    if (!generatedAt) return "SkyGrid Daily";
+
+    return new Date(generatedAt).toLocaleDateString("en-AU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Australia/Melbourne"
+    });
+  }
+
   function renderImage(container, story, fallback) {
     container.innerHTML = "";
 
-    if (story?.image_url) {
+    if (story.image_url) {
       const img = document.createElement("img");
-      img.src = addCacheBuster(story.image_url);
+      img.src = story.image_url + "?t=" + Date.now();
       img.alt = story.headline || fallback;
       img.loading = "lazy";
       container.appendChild(img);
       return;
     }
 
-    container.textContent = story?.image_prompt
+    container.textContent = story.image_prompt
       ? story.image_prompt.substring(0, 180) + "..."
       : fallback;
   }
 
-  function renderNews(data, wrapper) {
-    const reportDate = wrapper.generated_at
-      ? new Date(wrapper.generated_at).toLocaleDateString("en-AU", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-          timeZone: "Australia/Melbourne"
-        })
-      : "SkyGrid Daily";
+  function renderNews(data, wrapper, displayDateParam) {
+    const reportDate = displayDateParam
+      ? formatDateParamForDisplay(displayDateParam)
+      : formatGeneratedAtForDisplay(wrapper.generated_at);
 
     setText("newsDate", reportDate);
     setText("newsSubtitle", data.title || "SkyGrid Daily News");
@@ -172,14 +187,14 @@
       "HERO DAILY NEWS IMAGE"
     );
 
-    setText("heroHeadline", data.hero?.headline || "SkyGrid Daily News");
-    setText("heroBody", data.hero?.detailed_body || data.hero?.short_summary || "");
-    setText("heroEvidence", "Evidence note: " + (data.hero?.evidence_note || ""));
+    setText("heroHeadline", data.hero.headline);
+    setText("heroBody", data.hero.detailed_body || data.hero.short_summary);
+    setText("heroEvidence", "Evidence note: " + (data.hero.evidence_note || ""));
 
     const storiesContainer = document.getElementById("stories");
     storiesContainer.innerHTML = "";
 
-    (data.stories || []).forEach((story) => {
+    data.stories.forEach((story) => {
       const section = document.createElement("section");
       section.className = "story";
 
@@ -208,7 +223,7 @@
     });
   }
 
-  async function loadNewsPackage(key) {
+  async function loadNewsPackage(key, displayDateParam) {
     const response = await fetch(addCacheBuster(toFetchPath(key)));
 
     if (!response.ok) {
@@ -217,7 +232,7 @@
 
     const wrapper = await response.json();
     const data = unwrapPackage(wrapper);
-    renderNews(data, wrapper);
+    renderNews(data, wrapper, displayDateParam);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -228,20 +243,21 @@
       : LATEST_PACKAGE_KEY;
 
     try {
-      await loadNewsPackage(packageKey);
+      await loadNewsPackage(packageKey, requestedDate);
     } catch (error) {
       console.error(error);
 
       if (requestedDate) {
+        setText("newsDate", formatDateParamForDisplay(requestedDate));
+        setText("newsSubtitle", "Archive report unavailable");
         setText("heroHeadline", "SkyGrid archived report unavailable");
         setText("heroBody", `Could not load archived report for ${requestedDate}.`);
-        setText("newsSubtitle", "Archive report unavailable");
         return;
       }
 
+      setText("newsSubtitle", "Latest report unavailable");
       setText("heroHeadline", "SkyGrid Daily News unavailable");
       setText("heroBody", `Could not load ${LATEST_PACKAGE_KEY}`);
-      setText("newsSubtitle", "Latest report unavailable");
     }
   }
 
@@ -263,15 +279,15 @@
         return;
       }
 
-      const currentDate = getRequestedDate();
+      const selectedDate = getRequestedDate();
 
       archiveIndex.forEach((item) => {
         const link = document.createElement("a");
         link.className = "archive-link";
-        link.href = item.date ? `/news.html?date=${encodeURIComponent(item.date)}` : "#";
+        link.href = item.date ? `/news.html?date=${encodeURIComponent(item.date)}` : "/news.html";
         link.textContent = item.label || item.date || item.run_id;
 
-        if (item.date && item.date === currentDate) {
+        if (selectedDate && item.date === selectedDate) {
           link.textContent = `${link.textContent} • Current`;
         }
 
