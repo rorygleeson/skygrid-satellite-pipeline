@@ -1,11 +1,10 @@
-import random
-from urllib.error import HTTPError
 import json
 import os
-import re
+import random
 import time
 import urllib.request
 from datetime import datetime
+from urllib.error import HTTPError
 from zoneinfo import ZoneInfo
 
 import boto3
@@ -21,10 +20,6 @@ s3 = boto3.client("s3")
 
 def strip_code_fence(text):
     return text.replace("```json", "").replace("```", "").strip()
-
-
-def deep_copy(value):
-    return json.loads(json.dumps(value))
 
 
 def read_json_s3(key):
@@ -145,34 +140,26 @@ def set_inner_package(wrapper, inner):
     )
 
 
-def date_to_archive_package_key(date_text):
-    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_text or ""):
-        raise ValueError("date must use YYYY-MM-DD format")
+def get_melbourne_today_parts():
+    today = datetime.now(ZoneInfo("Australia/Melbourne"))
+    return today.strftime("%Y"), today.strftime("%m"), today.strftime("%d")
 
-    yyyy, mm, dd = date_text.split("-")
+
+def get_date_parts_from_event(event):
+    if isinstance(event, dict) and event.get("date"):
+        date_text = event["date"]
+        try:
+            parsed = datetime.strptime(date_text, "%Y-%m-%d")
+        except ValueError as exc:
+            raise ValueError("date must be in YYYY-MM-DD format") from exc
+
+        return parsed.strftime("%Y"), parsed.strftime("%m"), parsed.strftime("%d")
+
+    return get_melbourne_today_parts()
+
+
+def build_archive_package_key(yyyy, mm, dd):
     return f"published/news-site/archive/{yyyy}/{mm}/{dd}/package.json"
-
-
-def today_archive_package_key():
-    melbourne_now = datetime.now(ZoneInfo("Australia/Melbourne"))
-    return date_to_archive_package_key(melbourne_now.strftime("%Y-%m-%d"))
-
-
-def resolve_package_key(event):
-    if isinstance(event, dict):
-        explicit_key = (
-            event.get("news_site_package_key")
-            or event.get("package_key")
-            or event.get("news_site_archive")
-        )
-        if explicit_key:
-            return explicit_key.lstrip("/")
-
-        date_text = event.get("date")
-        if date_text:
-            return date_to_archive_package_key(date_text)
-
-    return today_archive_package_key()
 
 
 def build_jobs(inner):
@@ -213,36 +200,46 @@ def apply_image_url(inner, job, image_url):
     raise RuntimeError(f"Could not find story_number {story_number}")
 
 
+def has_all_image_urls(inner):
+    if not inner.get("hero", {}).get("image_url"):
+        return False
+
+    stories = inner.get("stories", [])
+    if not stories:
+        return False
+
+    return all(story.get("image_url") for story in stories)
+
+
 def lambda_handler(event, context):
     token = os.environ.get("REPLICATE_API_TOKEN")
     if not token:
         raise RuntimeError("Missing REPLICATE_API_TOKEN environment variable")
 
-    force_regenerate = False
-    if isinstance(event, dict):
-        force_regenerate = bool(event.get("force_regenerate", False))
+    if event is None:
+        event = {}
 
-    package_key = resolve_package_key(event)
+    force_regenerate = bool(event.get("force_regenerate", False)) if isinstance(event, dict) else False
 
-    wrapper = read_json_s3(package_key)
+    yyyy, mm, dd = get_date_parts_from_event(event)
+    archive_package_key = build_archive_package_key(yyyy, mm, dd)
+    archive_image_prefix = f"published/news-site/archive/{yyyy}/{mm}/{dd}/images"
+
+    wrapper = read_json_s3(archive_package_key)
     inner = get_inner_package(wrapper)
 
-    if inner.get("hero", {}).get("image_url") and not force_regenerate:
+    if has_all_image_urls(inner) and not force_regenerate:
         return {
             "statusCode": 200,
             "body": json.dumps(
                 {
                     "message": "Images already generated. Skipped.",
-                    "package_key": package_key,
+                    "archive_package_key": archive_package_key,
+                    "date": f"{yyyy}-{mm}-{dd}",
                 }
             ),
         }
 
-    run_id = wrapper["run_id"]
-    package_prefix = package_key.rsplit("/", 1)[0]
-    image_prefix = f"{package_prefix}/images/{run_id}"
-
-    inner_for_write = deep_copy(inner)
     jobs = build_jobs(inner)
     images_written = []
 
@@ -270,29 +267,28 @@ def lambda_handler(event, context):
         )
 
         image_bytes = generate_image(enhanced_prompt, token)
-
-        image_key = f"{image_prefix}/{job['filename']}"
+        archive_key = f"{archive_image_prefix}/{job['filename']}"
 
         s3.put_object(
             Bucket=BUCKET,
-            Key=image_key,
+            Key=archive_key,
             Body=image_bytes,
             ContentType="image/webp",
         )
 
-        apply_image_url(inner_for_write, job, "/" + image_key)
+        image_url = "/" + archive_key
+        apply_image_url(inner, job, image_url)
 
         images_written.append(
             {
                 "name": job["name"],
-                "image_key": image_key,
+                "archive_key": archive_key,
+                "image_url": image_url,
             }
         )
 
-    wrapper_for_write = deep_copy(wrapper)
-    set_inner_package(wrapper_for_write, inner_for_write)
-
-    write_json_s3(package_key, wrapper_for_write)
+    set_inner_package(wrapper, inner)
+    write_json_s3(archive_package_key, wrapper)
 
     return {
         "statusCode": 200,
@@ -300,8 +296,8 @@ def lambda_handler(event, context):
             {
                 "message": "SkyGrid news-site images generated",
                 "model": f"{MODEL_OWNER}/{MODEL_NAME}",
-                "package_key": package_key,
-                "image_prefix": image_prefix,
+                "date": f"{yyyy}-{mm}-{dd}",
+                "archive_package_key": archive_package_key,
                 "images_written": images_written,
             }
         ),
