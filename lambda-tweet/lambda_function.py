@@ -135,7 +135,7 @@ def build_tweet_text(story: dict, date_text: str) -> str:
     summary = (story.get("short_summary") or "").strip()
     link = report_url(date_text)
 
-    footer = f"Read more:\n{link}"
+    footer = f"Read today's full report:\n{link}\n\n#Starlink"
 
     if summary:
         text = f"{headline}\n\n{summary}\n\n{footer}"

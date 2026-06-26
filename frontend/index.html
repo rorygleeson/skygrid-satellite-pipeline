@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SkyGrid Live</title>
 
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
@@ -20,42 +21,173 @@
       font-family: Arial, Helvetica, sans-serif;
     }
 
-    .overlay {
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(0,255,255,.12), transparent 35%),
+        radial-gradient(circle at top right, rgba(40,90,255,.12), transparent 35%),
+        #020712;
+    }
+
+    .overlay,
+    .details-panel {
       position: absolute;
-      top: 20px;
-      left: 20px;
       z-index: 1000;
-      background: rgba(5, 15, 35, 0.72);
-      border: 1px solid rgba(0, 255, 255, 0.28);
-      border-radius: 12px;
-      padding: 16px 20px;
       color: white;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 30px rgba(0, 220, 255, 0.12);
-      min-width: 280px;
+      background: linear-gradient(180deg, rgba(5,15,35,.86), rgba(3,9,24,.78));
+      border: 1px solid rgba(0, 255, 255, 0.26);
+      border-radius: 18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 0 40px rgba(0, 220, 255, 0.14);
+    }
+
+    .overlay {
+      top: 22px;
+      left: 22px;
+      min-width: 292px;
+      max-width: 340px;
+      padding: 20px;
     }
 
     .details-panel {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      z-index: 1000;
-      width: 320px;
-      background: rgba(5, 15, 35, 0.82);
-      border: 1px solid rgba(0, 255, 255, 0.32);
-      border-radius: 12px;
-      padding: 18px 20px;
-      color: white;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 35px rgba(0, 220, 255, 0.16);
+      top: 22px;
+      right: 22px;
+      width: 330px;
+      padding: 20px;
       display: none;
+    }
+
+    .brand-link {
+      display: inline-block;
+      text-decoration: none;
+      color: inherit;
+      margin-bottom: 6px;
+    }
+
+    .title {
+      color: #69f3ff;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      line-height: 1;
+      text-shadow: 0 0 20px rgba(105,243,255,.18);
+    }
+
+    .subtitle {
+      margin-top: 7px;
+      color: #d0d7e2;
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .panel-divider {
+      height: 1px;
+      margin: 16px 0;
+      background: linear-gradient(90deg, rgba(105,243,255,.35), rgba(105,243,255,.03));
+    }
+
+    .metric {
+      margin-top: 12px;
+      color: white;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .status {
+      margin-top: 8px;
+      color: #8ff7ff;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 7px 10px;
+      color: #8ff7ff;
+      font-size: 12px;
+      border: 1px solid rgba(0,255,255,.22);
+      border-radius: 999px;
+      background: rgba(0,255,255,.08);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #69f3ff;
+      box-shadow: 0 0 14px rgba(105,243,255,.9);
+    }
+
+    .button-stack {
+      margin-top: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .close-button,
+    .news-button,
+    .live-button,
+    .x-button {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      box-sizing: border-box;
+      font-size: 13px;
+      text-align: center;
+      text-decoration: none;
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    }
+
+    .news-button {
+      color: #02121e;
+      border: 1px solid rgba(105,243,255,.8);
+      background: linear-gradient(135deg, #69f3ff, #18a8ff);
+      font-weight: 700;
+      box-shadow: 0 0 22px rgba(24,168,255,.22);
+    }
+
+    .live-button,
+    .close-button {
+      background: rgba(0,255,255,.10);
+      color: #8ff7ff;
+      border: 1px solid rgba(0,255,255,.28);
+    }
+
+    .x-button {
+      background: rgba(255,255,255,.05);
+      color: #d0d7e2;
+      border: 1px solid rgba(255,255,255,.12);
+      font-size: 12px;
+    }
+
+    .news-button:hover,
+    .live-button:hover,
+    .close-button:hover,
+    .x-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .live-button:hover,
+    .close-button:hover {
+      background: rgba(0,255,255,.18);
+    }
+
+    .x-button:hover {
+      color: #8ff7ff;
+      border-color: rgba(0,255,255,.28);
+      background: rgba(0,255,255,.08);
     }
 
     .details-title {
       color: #69f3ff;
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 12px;
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 14px;
+      letter-spacing: .5px;
     }
 
     .detail-row {
@@ -63,7 +195,7 @@
       justify-content: space-between;
       gap: 15px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 7px 0;
+      padding: 8px 0;
       font-size: 13px;
     }
 
@@ -77,61 +209,54 @@
       word-break: break-word;
     }
 
-    .close-button,
-    .news-button,
-    .live-button {
-      margin-top: 14px;
-      width: 100%;
-      padding: 8px;
-      background: rgba(0, 255, 255, 0.12);
-      color: #8ff7ff;
-      border: 1px solid rgba(0, 255, 255, 0.3);
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .news-button {
-    display: block;
-    text-align: center;
-    text-decoration: none;
-    box-sizing: border-box;
-    font-size: 13px;
-    }
-
-    .news-button:hover,
-    .live-button:hover,
-    .close-button:hover {
-    background: rgba(0, 255, 255, 0.2);
-    }
-
-    .title {
-      color: #69f3ff;
-      font-size: 24px;
-      font-weight: bold;
-      letter-spacing: 2px;
-    }
-
-    .subtitle {
-      margin-top: 6px;
-      color: #d0d7e2;
-      font-size: 13px;
-    }
-
-    .metric {
-      margin-top: 12px;
-      color: white;
-      font-size: 14px;
-    }
-
-    .status {
-      margin-top: 8px;
-      color: #8ff7ff;
-      font-size: 12px;
-    }
-
     .cesium-viewer-bottom,
     .cesium-viewer-animationContainer,
     .cesium-viewer-timelineContainer {
       display: none !important;
+    }
+
+    @media (max-width: 760px) {
+      .overlay {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        min-width: 0;
+        max-width: none;
+        padding: 15px;
+        border-radius: 16px;
+      }
+
+      .title {
+        font-size: 28px;
+      }
+
+      .subtitle {
+        font-size: 12px;
+      }
+
+      .panel-divider {
+        margin: 12px 0;
+      }
+
+      .button-stack {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .x-button {
+        grid-column: 1 / -1;
+      }
+
+      .details-panel {
+        left: 12px;
+        right: 12px;
+        top: auto;
+        bottom: 12px;
+        width: auto;
+        max-height: 46vh;
+        overflow: auto;
+        border-radius: 16px;
+      }
     }
   </style>
 </head>
@@ -140,12 +265,22 @@
   <div id="cesiumContainer"></div>
 
   <div class="overlay">
-    <div class="title">SKYGRID LIVE</div>
-    <div class="subtitle">Starlink constellation viewer</div>
+    <a class="brand-link" href="/">
+      <div class="title">SKYGRID</div>
+    </a>
+    <div class="subtitle">Live Constellation</div>
+
+    <div class="panel-divider"></div>
+
     <div class="metric" id="satelliteCount">🛰 Loading satellites...</div>
     <div class="status" id="status">Loading Earth...</div>
-    <a class="news-button" href="/news.html">📰 Daily News</a>
-    <button class="live-button" id="liveModeButton">Live Mode: Off</button>
+    <div class="status-badge"><span class="status-dot"></span><span>Live tracking defaults to 3-second updates</span></div>
+
+    <div class="button-stack">
+      <a class="news-button" href="/news.html">📰 Daily News</a>
+      <button class="live-button" id="liveModeButton">Live Mode: Starting</button>
+      <a class="x-button" href="https://x.com/SkyGrid_Space" target="_blank" rel="noopener">Follow @SkyGrid_Space</a>
+    </div>
   </div>
 
   <div class="details-panel" id="detailsPanel">
@@ -184,28 +319,31 @@
     let satelliteEntries = [];
     let liveModeEnabled = false;
     let liveUpdateTimer = null;
+    let spinEnabled = true;
+    let viewerInstance = null;
 
-    const LIVE_UPDATE_INTERVAL_MS = 5000;
+    const LIVE_UPDATE_INTERVAL_MS = 3000;
+    const GLOBE_ROTATION_RATE = 0.000035;
 
+    const satelliteScaleByDistance = new Cesium.NearFarScalar(
+      500000,
+      6.0,
+      30000000,
+      0.25
+    );
 
-  const satelliteScaleByDistance = new Cesium.NearFarScalar(
-    500000,
-    6.0,
-    30000000,
-    0.25
-  );
+    const defaultPointStyle = {
+      pixelSize: 5,
+      color: Cesium.Color.CYAN.withAlpha(0.65),
+      outlineColor: Cesium.Color.TRANSPARENT,
+      outlineWidth: 0
+    };
 
-const defaultPointStyle = {
-  pixelSize: 5,
-  color: Cesium.Color.CYAN.withAlpha(0.65),
-  outlineColor: Cesium.Color.TRANSPARENT,
-  outlineWidth: 0
-};
+    const selectedPointStyle = {
+      pixelSize: 12,
+      color: Cesium.Color.WHITE,
+    };
 
-const selectedPointStyle = {
-  pixelSize: 12,
-  color: Cesium.Color.WHITE,
-};
     async function loadStarlinkData() {
       const response = await fetch("/data/starlink/latest/starlink.json?t=" + Date.now());
 
@@ -370,6 +508,11 @@ const selectedPointStyle = {
         button.textContent = "Live Mode: On";
         document.getElementById("status").textContent = "Live mode starting...";
 
+        if (liveUpdateTimer) {
+          clearInterval(liveUpdateTimer);
+          liveUpdateTimer = null;
+        }
+
         updateSatellitePositions();
 
         liveUpdateTimer = setInterval(
@@ -397,121 +540,120 @@ const selectedPointStyle = {
       });
     }
 
+    function setupGlobeSpin(viewer) {
+      viewer.clock.onTick.addEventListener(function () {
+        if (!spinEnabled) return;
+        viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, -GLOBE_ROTATION_RATE);
+      });
 
-function findNearestSatelliteFromTap(viewer, tapPosition, maxDistancePixels) {
-  let nearestEntry = null;
-  let nearestDistance = maxDistancePixels;
-
-  const occluder = new Cesium.EllipsoidalOccluder(
-    viewer.scene.globe.ellipsoid,
-    viewer.camera.positionWC
-  );
-
-  for (const entry of satelliteEntries) {
-    if (!entry.entity || !entry.entity.position) continue;
-
-    const cartesian = entry.entity.position.getValue(viewer.clock.currentTime);
-    if (!cartesian) continue;
-
-    // Ignore satellites hidden behind the Earth
-    if (!occluder.isPointVisible(cartesian)) {
-      continue;
+      const canvas = viewer.scene.canvas;
+      ["mousedown", "touchstart", "wheel"].forEach(function (eventName) {
+        canvas.addEventListener(eventName, function () {
+          spinEnabled = false;
+        }, { passive: true });
+      });
     }
 
-    const screenPosition = Cesium.SceneTransforms.wgs84ToWindowCoordinates(
-      viewer.scene,
-      cartesian
-    );
+    function findNearestSatelliteFromTap(viewer, tapPosition, maxDistancePixels) {
+      let nearestEntry = null;
+      let nearestDistance = maxDistancePixels;
 
-    if (!screenPosition) continue;
-
-    if (
-      screenPosition.x < 0 ||
-      screenPosition.y < 0 ||
-      screenPosition.x > viewer.canvas.clientWidth ||
-      screenPosition.y > viewer.canvas.clientHeight
-    ) {
-      continue;
-    }
-
-    const dx = screenPosition.x - tapPosition.x;
-    const dy = screenPosition.y - tapPosition.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    if (distance <= nearestDistance) {
-      nearestDistance = distance;
-      nearestEntry = entry;
-    }
-  }
-
-  return nearestEntry;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-function setupClickHandler(viewer) {
-  const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-
-  const isTouchDevice =
-    window.matchMedia("(pointer: coarse)").matches ||
-    "ontouchstart" in window;
-
-  handler.setInputAction(function (movement) {
-
-    let picked = viewer.scene.pick(movement.position);
-    let entity = null;
-
-    if (
-      Cesium.defined(picked) &&
-      picked.id &&
-      picked.id.properties &&
-      picked.id.properties.satelliteData
-    ) {
-      entity = picked.id;
-    }
-
-    if (!entity && isTouchDevice) {
-      const nearestEntry = findNearestSatelliteFromTap(
-        viewer,
-        movement.position,
-        35
+      const occluder = new Cesium.EllipsoidalOccluder(
+        viewer.scene.globe.ellipsoid,
+        viewer.camera.positionWC
       );
 
-      if (nearestEntry) {
-        entity = nearestEntry.entity;
+      for (const entry of satelliteEntries) {
+        if (!entry.entity || !entry.entity.position) continue;
+
+        const cartesian = entry.entity.position.getValue(viewer.clock.currentTime);
+        if (!cartesian) continue;
+
+        if (!occluder.isPointVisible(cartesian)) {
+          continue;
+        }
+
+        const screenPosition = Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+          viewer.scene,
+          cartesian
+        );
+
+        if (!screenPosition) continue;
+
+        if (
+          screenPosition.x < 0 ||
+          screenPosition.y < 0 ||
+          screenPosition.x > viewer.canvas.clientWidth ||
+          screenPosition.y > viewer.canvas.clientHeight
+        ) {
+          continue;
+        }
+
+        const dx = screenPosition.x - tapPosition.x;
+        const dy = screenPosition.y - tapPosition.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance <= nearestDistance) {
+          nearestDistance = distance;
+          nearestEntry = entry;
+        }
       }
+
+      return nearestEntry;
     }
 
-    if (!entity) {
-      hideDetailsPanel();
-      return;
+    function setupClickHandler(viewer) {
+      const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+      const isTouchDevice =
+        window.matchMedia("(pointer: coarse)").matches ||
+        "ontouchstart" in window;
+
+      handler.setInputAction(function (movement) {
+        let picked = viewer.scene.pick(movement.position);
+        let entity = null;
+
+        if (
+          Cesium.defined(picked) &&
+          picked.id &&
+          picked.id.properties &&
+          picked.id.properties.satelliteData
+        ) {
+          entity = picked.id;
+        }
+
+        if (!entity && isTouchDevice) {
+          const nearestEntry = findNearestSatelliteFromTap(
+            viewer,
+            movement.position,
+            35
+          );
+
+          if (nearestEntry) {
+            entity = nearestEntry.entity;
+          }
+        }
+
+        if (!entity) {
+          hideDetailsPanel();
+          return;
+        }
+
+        if (selectedEntity) {
+          applyDefaultStyle(selectedEntity);
+        }
+
+        selectedEntity = entity;
+        applySelectedStyle(selectedEntity);
+
+        const time = viewer.clock.currentTime;
+        const sat = selectedEntity.properties.satelliteData.getValue(time);
+        const position = selectedEntity.properties.calculatedPosition.getValue(time);
+
+        showDetailsPanel(sat, position);
+
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
     }
-
-    if (selectedEntity) {
-      applyDefaultStyle(selectedEntity);
-    }
-
-    selectedEntity = entity;
-    applySelectedStyle(selectedEntity);
-
-    const time = viewer.clock.currentTime;
-    const sat = selectedEntity.properties.satelliteData.getValue(time);
-    const position = selectedEntity.properties.calculatedPosition.getValue(time);
-
-    showDetailsPanel(sat, position);
-
-  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-}
-    
 
     async function startSkyGrid() {
       if (typeof satellite === "undefined") {
@@ -541,6 +683,7 @@ function setupClickHandler(viewer) {
         selectionIndicator: false
       });
 
+      viewerInstance = viewer;
       viewer.scene.globe.enableLighting = true;
       viewer.scene.skyAtmosphere.show = true;
       viewer.scene.backgroundColor = Cesium.Color.BLACK;
@@ -548,6 +691,8 @@ function setupClickHandler(viewer) {
       viewer.camera.setView({
         destination: Cesium.Cartesian3.fromDegrees(135, -25, 25000000)
       });
+
+      setupGlobeSpin(viewer);
 
       document.getElementById("status").textContent = "Earth online";
 
@@ -567,7 +712,9 @@ function setupClickHandler(viewer) {
       setupClickHandler(viewer);
 
       document.getElementById("status").textContent =
-        plottedCount.toLocaleString() + " satellites static";
+        plottedCount.toLocaleString() + " satellites ready";
+
+      setLiveMode(true);
     }
 
     startSkyGrid().catch(error => {
