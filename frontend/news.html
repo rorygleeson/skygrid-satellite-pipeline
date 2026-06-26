@@ -91,7 +91,7 @@
   </main>
 
  <script>
-  const LATEST_PACKAGE_KEY = "published/news-site/latest/package.json";
+  
 
   function stripCodeFence(text) {
     return text
@@ -124,10 +124,16 @@
     return /^\d{4}-\d{2}-\d{2}$/.test(dateText || "");
   }
 
+  function getMelbourneToday() {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'Australia/Melbourne',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
+    return `${parts.find(p=>p.type=='year').value}-${parts.find(p=>p.type=='month').value}-${parts.find(p=>p.type=='day').value}`;
+  }
+
   function getRequestedDate() {
     const params = new URLSearchParams(window.location.search);
     const dateText = params.get("date");
-    return isValidDateParam(dateText) ? dateText : null;
+    return isValidDateParam(dateText) ? dateText : getMelbourneToday();
   }
 
   function archiveKeyFromDate(dateText) {
@@ -174,9 +180,7 @@
   }
 
   function renderNews(data, wrapper, displayDateParam) {
-    const reportDate = displayDateParam
-      ? formatDateParamForDisplay(displayDateParam)
-      : formatGeneratedAtForDisplay(wrapper.generated_at);
+    const reportDate = formatDateParamForDisplay(displayDateParam);
 
     setText("newsDate", reportDate);
     setText("newsSubtitle", data.title || "SkyGrid Daily News");
@@ -238,9 +242,7 @@
 
   async function loadInitialNews() {
     const requestedDate = getRequestedDate();
-    const packageKey = requestedDate
-      ? archiveKeyFromDate(requestedDate)
-      : LATEST_PACKAGE_KEY;
+    const packageKey = archiveKeyFromDate(requestedDate);
 
     try {
       await loadNewsPackage(packageKey, requestedDate);
@@ -255,9 +257,9 @@
         return;
       }
 
-      setText("newsSubtitle", "Latest report unavailable");
-      setText("heroHeadline", "SkyGrid Daily News unavailable");
-      setText("heroBody", `Could not load ${LATEST_PACKAGE_KEY}`);
+      setText("newsSubtitle", "Report unavailable");
+      setText("heroHeadline", "SkyGrid report unavailable");
+      setText("heroBody", `Could not load archived report for ${requestedDate}.`);
     }
   }
 
