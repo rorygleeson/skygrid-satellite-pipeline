@@ -305,28 +305,20 @@ Editorial Selection Rules:
         "response": news_site_response,
     }
 
-    daily_latest_key = "published/news/latest/daily_report.json"
     daily_archive_key = (
         f"published/news/archive/{yyyy}/{mm}/{dd}/daily_report.json"
     )
 
-    tiktok_latest_key = "published/tiktok/latest/tiktok_package.json"
     tiktok_archive_key = (
         f"published/tiktok/archive/{yyyy}/{mm}/{dd}/tiktok_package.json"
     )
 
-    news_site_latest_key = "published/news-site/latest/package.json"
     news_site_archive_key = (
         f"published/news-site/archive/{yyyy}/{mm}/{dd}/package.json"
     )
 
-    write_json(daily_latest_key, daily_output)
     write_json(daily_archive_key, daily_output)
-
-    write_json(tiktok_latest_key, tiktok_output)
     write_json(tiktok_archive_key, tiktok_output)
-
-    write_json(news_site_latest_key, news_site_output)
     write_json(news_site_archive_key, news_site_output)
 
     news_site_archive_index_key = update_news_site_archive_index(
@@ -340,11 +332,9 @@ Editorial Selection Rules:
         "body": json.dumps(
             {
                 "message": "SkyGrid publishing complete",
-                "daily_latest": daily_latest_key,
+                "date": melbourne_now.strftime("%Y-%m-%d"),
                 "daily_archive": daily_archive_key,
-                "tiktok_latest": tiktok_latest_key,
                 "tiktok_archive": tiktok_archive_key,
-                "news_site_latest": news_site_latest_key,
                 "news_site_archive": news_site_archive_key,
                 "news_site_archive_index": news_site_archive_index_key,
             }
