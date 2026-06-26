@@ -239,8 +239,40 @@
       color:#d8e6f5;
       line-height:1.55;
       font-size:18px;
-      margin-bottom:28px;
+      margin-bottom:18px;
       max-width:520px;
+      display:-webkit-box;
+      -webkit-line-clamp:3;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+
+    .hero-full {
+      display:none;
+      color:#d6e4f2;
+      font-size:16px;
+      line-height:1.7;
+      margin:0 0 18px;
+      padding-top:16px;
+      border-top:1px solid rgba(255,255,255,.08);
+      max-width:560px;
+    }
+
+    .hero-card.expanded .hero-summary {
+      -webkit-line-clamp:unset;
+      overflow:visible;
+    }
+
+    .hero-card.expanded .hero-full {
+      display:block;
+    }
+
+    .hero-footer {
+      display:flex;
+      align-items:center;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
     }
 
     .meta-row {
@@ -623,7 +655,10 @@
       .hero-card { display:flex; flex-direction:column; min-height:0; }
       .hero-copy { padding:22px; }
       .hero-title { font-size:31px; letter-spacing:-.8px; }
-      .hero-summary { font-size:16px; }
+      .hero-summary { font-size:16px; -webkit-line-clamp:2; }
+      .hero-full { font-size:14px; line-height:1.65; }
+      .hero-card.expanded .hero-summary { -webkit-line-clamp:unset; }
+      .hero-footer { margin-bottom:14px; }
       .hero-image { min-height:260px; }
       .hero-image img { min-height:260px; }
       .live-panel { min-height:0; }
@@ -695,6 +730,10 @@
           <div class="tag">Top Story</div>
           <h1 class="hero-title" id="heroHeadline">Loading...</h1>
           <div class="hero-summary" id="heroBody">Loading SkyGrid daily news package...</div>
+          <div class="hero-full" id="heroFull"></div>
+          <div class="hero-footer">
+            <button type="button" class="story-toggle" id="heroToggle">Read full story</button>
+          </div>
           <div class="meta-row">
             <span class="meta-item"><span class="meta-icon">▣</span><span id="newsDate">Loading...</span></span>
             <span class="meta-item"><span class="meta-icon">◎</span><span>SkyGrid Report</span></span>
@@ -836,6 +875,18 @@
 
       setText("heroHeadline", data.hero.headline);
       setText("heroBody", data.hero.short_summary || data.hero.detailed_body || "");
+      setText("heroFull", data.hero.detailed_body || data.hero.short_summary || "");
+
+      const heroCard = document.querySelector(".hero-card");
+      const heroToggle = document.getElementById("heroToggle");
+      if (heroCard && heroToggle) {
+        heroCard.classList.remove("expanded");
+        heroToggle.textContent = "Read full story";
+        heroToggle.onclick = () => {
+          const isExpanded = heroCard.classList.toggle("expanded");
+          heroToggle.textContent = isExpanded ? "Collapse" : "Read full story";
+        };
+      }
 
       const storiesContainer = document.getElementById("stories");
       storiesContainer.innerHTML = "";
@@ -908,6 +959,7 @@
         setText("storyDate", formatDateParamForDisplay(requestedDate));
         setText("heroHeadline", "SkyGrid archived report unavailable");
         setText("heroBody", `Could not load archived report for ${requestedDate}.`);
+        setText("heroFull", "");
         document.getElementById("heroImage").innerHTML = `<div class="error-card">Report unavailable</div>`;
       }
     }
