@@ -41,11 +41,14 @@
     }
 
     .overlay {
-      top: 22px;
-      left: 22px;
-      min-width: 292px;
-      max-width: 340px;
-      padding: 20px;
+      top: 14px;
+      left: 14px;
+      width: 178px;
+      min-width: 0;
+      max-width: 178px;
+      padding: 10px;
+      border-radius: 13px;
+      box-shadow: 0 0 22px rgba(0, 220, 255, 0.12);
     }
 
     .details-panel {
@@ -65,43 +68,37 @@
 
     .title {
       color: #69f3ff;
-      font-size: 34px;
+      font-size: 20px;
       font-weight: 800;
-      letter-spacing: 3px;
+      letter-spacing: 2px;
       line-height: 1;
-      text-shadow: 0 0 20px rgba(105,243,255,.18);
+      text-shadow: 0 0 16px rgba(105,243,255,.18);
     }
 
     .subtitle {
-      margin-top: 7px;
-      color: #d0d7e2;
-      font-size: 13px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
+      display: none;
     }
 
     .panel-divider {
       height: 1px;
-      margin: 16px 0;
-      background: linear-gradient(90deg, rgba(105,243,255,.35), rgba(105,243,255,.03));
+      margin: 9px 0;
+      background: linear-gradient(90deg, rgba(105,243,255,.28), rgba(105,243,255,.03));
     }
 
     .metric {
-      margin-top: 12px;
-      color: white;
-      font-size: 14px;
-      line-height: 1.45;
+      display: none;
     }
 
     .status {
-      margin-top: 8px;
+      margin-top: 7px;
       color: #8ff7ff;
-      font-size: 12px;
-      line-height: 1.45;
+      font-size: 11px;
+      line-height: 1.35;
+      white-space: nowrap;
     }
 
     .status-badge {
-      display: inline-flex;
+      display: none;
       align-items: center;
       gap: 8px;
       margin-top: 12px;
@@ -122,9 +119,9 @@
     }
 
     .button-stack {
-      margin-top: 16px;
+      margin-top: 9px;
       display: grid;
-      gap: 10px;
+      gap: 6px;
     }
 
     .close-button,
@@ -132,11 +129,11 @@
     .live-button,
     .x-button {
       width: 100%;
-      padding: 10px 12px;
+      padding: 7px 8px;
       border-radius: 999px;
       cursor: pointer;
       box-sizing: border-box;
-      font-size: 13px;
+      font-size: 11px;
       text-align: center;
       text-decoration: none;
       transition: background .18s ease, border-color .18s ease, transform .18s ease;
@@ -161,7 +158,7 @@
       background: rgba(255,255,255,.05);
       color: #d0d7e2;
       border: 1px solid rgba(255,255,255,.12);
-      font-size: 12px;
+      font-size: 11px;
     }
 
     .news-button:hover,
@@ -217,34 +214,27 @@
 
     @media (max-width: 760px) {
       .overlay {
-        top: 12px;
-        left: 12px;
-        right: 12px;
+        top: 10px;
+        left: 10px;
+        right: auto;
+        width: 168px;
         min-width: 0;
-        max-width: none;
-        padding: 15px;
-        border-radius: 16px;
+        max-width: 168px;
+        padding: 9px;
+        border-radius: 12px;
       }
 
       .title {
-        font-size: 28px;
-      }
-
-      .subtitle {
-        font-size: 12px;
+        font-size: 18px;
       }
 
       .panel-divider {
-        margin: 12px 0;
+        margin: 8px 0;
       }
 
       .button-stack {
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
-
-      .x-button {
-        grid-column: 1 / -1;
+        grid-template-columns: 1fr;
+        gap: 5px;
       }
 
       .details-panel {
@@ -278,8 +268,8 @@
 
     <div class="button-stack">
       <a class="news-button" href="/news.html">📰 Daily News</a>
-      <button class="live-button" id="liveModeButton">Live Mode: Starting</button>
-      <a class="x-button" href="https://x.com/SkyGrid_Space" target="_blank" rel="noopener">Follow @SkyGrid_Space</a>
+      <button class="live-button" id="liveModeButton">Live: Starting</button>
+      <a class="x-button" href="https://x.com/SkyGrid_Space" target="_blank" rel="noopener">𝕏 @SkyGrid_Space</a>
     </div>
   </div>
 
@@ -505,8 +495,8 @@
       const button = document.getElementById("liveModeButton");
 
       if (liveModeEnabled) {
-        button.textContent = "Live Mode: On";
-        document.getElementById("status").textContent = "Live mode starting...";
+        button.textContent = "Live: On";
+        document.getElementById("status").textContent = "Starting live mode...";
 
         if (liveUpdateTimer) {
           clearInterval(liveUpdateTimer);
@@ -520,7 +510,7 @@
           LIVE_UPDATE_INTERVAL_MS
         );
       } else {
-        button.textContent = "Live Mode: Off";
+        button.textContent = "Live: Off";
 
         if (liveUpdateTimer) {
           clearInterval(liveUpdateTimer);
