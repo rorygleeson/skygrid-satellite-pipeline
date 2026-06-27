@@ -130,12 +130,27 @@ def select_story(inner_package: dict, item_name: str) -> dict:
     raise RuntimeError(f"Could not find item {item_name} in package")
 
 
-def build_tweet_text(story: dict, date_text: str) -> str:
+def parse_send_link(event: dict) -> bool:
+    value = event.get("sendLink", True)
+
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, str):
+        return value.strip().lower() not in ["false", "0", "no", "n"]
+
+    return bool(value)
+
+
+def build_tweet_text(story: dict, date_text: str, send_link: bool = True) -> str:
     headline = (story.get("headline") or "SkyGrid Daily News").strip()
     summary = (story.get("short_summary") or "").strip()
     link = report_url(date_text)
 
-    footer = f"Read today's full report:\n{link}\n\n#Starlink"
+    if send_link:
+        footer = f"Read today's full report:\n{link}\n\n#Starlink"
+    else:
+        footer = "#Starlink #SkyGrid"
 
     if summary:
         text = f"{headline}\n\n{summary}\n\n{footer}"
@@ -145,7 +160,7 @@ def build_tweet_text(story: dict, date_text: str) -> str:
     if len(text) <= 280:
         return text
 
-    # Trim only the short summary. Preserve headline and link.
+    # Trim only the short summary. Preserve headline and footer.
     fixed = f"{headline}\n\n\n\n{footer}"
     max_summary_length = max(0, 280 - len(fixed) - 1)
 
@@ -261,6 +276,7 @@ def lambda_handler(event, context):
 
     dry_run = bool(event.get("dry_run", False))
     force_item = event.get("force_item")  # optional manual test only
+    send_link = parse_send_link(event)
 
     state = get_effective_state(date_text)
     item_to_post = force_item or state["next_item"]
@@ -283,7 +299,7 @@ def lambda_handler(event, context):
     inner = unwrap_news_package(wrapper)
     story = select_story(inner, item_to_post)
 
-    tweet_text = build_tweet_text(story, date_text)
+    tweet_text = build_tweet_text(story, date_text, send_link)
     image_url = story.get("image_url")
 
     if not image_url:
@@ -299,6 +315,7 @@ def lambda_handler(event, context):
                 "item": item_to_post,
                 "tweet_text": tweet_text,
                 "tweet_length": len(tweet_text),
+                "sendLink": send_link,
                 "image_url": image_url,
                 "current_state": state,
             }, ensure_ascii=False),
@@ -333,6 +350,7 @@ def lambda_handler(event, context):
             "item_posted": item_to_post,
             "next_item": next_item,
             "tweet_length": len(tweet_text),
+            "sendLink": send_link,
             "image_url": image_url,
             "media_id": media_id,
             "x_response": tweet_response,
