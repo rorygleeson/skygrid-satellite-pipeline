@@ -410,6 +410,95 @@
       z-index:2;
     }
 
+    .glance-panel {
+      margin-top:24px;
+      padding-top:18px;
+      border-top:1px solid rgba(255,255,255,.10);
+      position:relative;
+      z-index:2;
+    }
+
+    .glance-panel[hidden] { display:none !important; }
+
+    .glance-title {
+      margin:0 0 12px;
+      color:#eaf8ff;
+      font-size:15px;
+      font-weight:900;
+      letter-spacing:.3px;
+      text-transform:uppercase;
+    }
+
+    .glance-grid {
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:8px;
+    }
+
+    .glance-item {
+      min-height:72px;
+      padding:10px;
+      border:1px solid rgba(72,234,255,.18);
+      border-radius:9px;
+      background:rgba(2,12,28,.50);
+    }
+
+    .glance-item.wide {
+      grid-column:1 / -1;
+      min-height:0;
+    }
+
+    .glance-kicker {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      color:#a9bdd1;
+      font-size:10px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+      margin-bottom:5px;
+    }
+
+    .glance-value {
+      color:white;
+      font-size:18px;
+      line-height:1.1;
+      font-weight:900;
+      letter-spacing:-.2px;
+    }
+
+    .glance-sub {
+      margin-top:4px;
+      color:#93abc0;
+      font-size:11px;
+      line-height:1.35;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .glance-story {
+      margin-top:10px;
+      padding:11px 12px;
+      border:1px solid rgba(21,150,255,.24);
+      border-radius:9px;
+      background:rgba(21,150,255,.12);
+      color:#dcefff;
+      font-size:12px;
+      line-height:1.45;
+      font-weight:700;
+    }
+
+    .glance-story strong {
+      display:block;
+      color:var(--cyan);
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+      margin-bottom:4px;
+    }
+
     .live-strip {
       border-top:1px solid var(--line2);
       display:grid;
@@ -667,6 +756,10 @@
       .live-panel-main::after { width:220px; right:-58px; top:83px; }
       .live-panel h2 { font-size:24px; max-width:245px; }
       .live-panel p { font-size:15px; max-width:220px; }
+      .glance-panel { margin-top:18px; padding-top:15px; }
+      .glance-grid { gap:7px; }
+      .glance-item { min-height:64px; padding:9px; }
+      .glance-value { font-size:16px; }
       .live-strip { grid-template-columns:repeat(2, 1fr); }
       .live-strip div { padding:13px 10px; font-size:12px; }
       .section-head { margin-top:20px; }
@@ -748,6 +841,12 @@
           <h2>Explore the SkyGrid Live Constellation</h2>
           <p>See every Starlink satellite tracked in real time around Earth.</p>
           <a class="primary-btn" href="/">Launch Live Globe →</a>
+
+          <div class="glance-panel" id="glancePanel" hidden>
+            <div class="glance-title">🚀 SkyGrid at a Glance</div>
+            <div class="glance-grid" id="glanceGrid"></div>
+            <div class="glance-story" id="glanceStory"></div>
+          </div>
         </div>
         <div class="live-strip">
           <div>◎ Real-time Tracking</div>
@@ -843,6 +942,102 @@
       });
     }
 
+    function formatGlanceInteger(value) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number.toLocaleString() : (value || "-");
+    }
+
+    function formatGlanceKm(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return value || "-";
+      const sign = number > 0 ? "+" : "";
+      return `${sign}${number.toFixed(1)} km`;
+    }
+
+    function shortSatelliteName(value) {
+      return value ? String(value).replace("STARLINK-", "SL-") : "";
+    }
+
+    function addGlanceItem(container, icon, label, value, sub, wide) {
+      const item = document.createElement("div");
+      item.className = wide ? "glance-item wide" : "glance-item";
+
+      const kicker = document.createElement("div");
+      kicker.className = "glance-kicker";
+      kicker.textContent = `${icon} ${label}`;
+
+      const main = document.createElement("div");
+      main.className = "glance-value";
+      main.textContent = value || "-";
+
+      item.appendChild(kicker);
+      item.appendChild(main);
+
+      if (sub) {
+        const subline = document.createElement("div");
+        subline.className = "glance-sub";
+        subline.textContent = sub;
+        item.appendChild(subline);
+      }
+
+      container.appendChild(item);
+    }
+
+    function renderGlance(glance) {
+      const panel = document.getElementById("glancePanel");
+      const grid = document.getElementById("glanceGrid");
+      const story = document.getElementById("glanceStory");
+
+      if (!panel || !grid || !story) return;
+
+      if (!glance || typeof glance !== "object") {
+        panel.hidden = true;
+        grid.innerHTML = "";
+        story.innerHTML = "";
+        return;
+      }
+
+      panel.hidden = false;
+      grid.innerHTML = "";
+      story.innerHTML = "";
+
+      addGlanceItem(grid, "🛰", "Tracked", formatGlanceInteger(glance.total_satellites), "satellites", false);
+      addGlanceItem(grid, "⚠️", "Reentry", formatGlanceInteger(glance.reentry_watch_count), "below 250 km", false);
+      addGlanceItem(grid, "🔥", "Critical", formatGlanceInteger(glance.critical_altitude_count), "below 200 km", false);
+      addGlanceItem(grid, "🚀", "Raising", formatGlanceInteger(glance.orbit_raise_count), "orbit raise", false);
+      addGlanceItem(
+        grid,
+        "📈",
+        "Biggest mover",
+        formatGlanceKm(glance.biggest_altitude_change_km),
+        shortSatelliteName(glance.biggest_mover_satellite),
+        true
+      );
+      addGlanceItem(
+        grid,
+        "🌍",
+        "Space weather",
+        `${glance.space_weather_status || "-"}${glance.kp_index ? " • Kp " + glance.kp_index : ""}`,
+        [glance.geomagnetic_storm_level, glance.radio_blackout_level, glance.radiation_storm_level].filter(Boolean).join(" / "),
+        true
+      );
+      addGlanceItem(
+        grid,
+        "📅",
+        "Latest launch",
+        glance.latest_launch_age_days ? `${glance.latest_launch_age_days} days` : "-",
+        shortSatelliteName(glance.latest_launch_satellite),
+        true
+      );
+
+      if (glance.story_of_the_day) {
+        story.innerHTML = "<strong>⭐ Story of the day</strong>";
+        story.appendChild(document.createTextNode(glance.story_of_the_day));
+      } else {
+        story.style.display = "none";
+      }
+    }
+
     function renderImage(container, story, fallback) {
       container.innerHTML = "";
 
@@ -866,6 +1061,7 @@
       setText("newsDate", reportDate);
       setText("mobileDate", reportDate);
       setText("storyDate", reportDate);
+      renderGlance(data.glance);
 
       renderImage(
         document.getElementById("heroImage"),
@@ -961,6 +1157,7 @@
         setText("heroBody", `Could not load archived report for ${requestedDate}.`);
         setText("heroFull", "");
         document.getElementById("heroImage").innerHTML = `<div class="error-card">Report unavailable</div>`;
+        renderGlance(null);
       }
     }
 
