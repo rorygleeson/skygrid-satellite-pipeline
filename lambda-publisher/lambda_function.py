@@ -153,6 +153,7 @@ Return this exact JSON structure:
 "type": "daily_news_site_package",
 "title": "...",
 "subtitle": "...",
+"glance": { ... },
 "hero": {
 "headline": "...",
 "big_number": "...",
@@ -175,6 +176,9 @@ Return this exact JSON structure:
 }
 
 Rules:
+• If the fetch_story_evidence tool returns a top-level "glance" object, include it unchanged in the final JSON immediately after "subtitle".
+• Do not rename, remove, rewrite, summarise, round, infer, recalculate, or reformat any glance values.
+• If no glance object is returned, set "glance": null.
 • Create exactly 5 stories in the stories array.
 • The hero story may overlap with story 1, but it should be written as the page lead.
 • detailed_body should be 100 to 140 words per story.
