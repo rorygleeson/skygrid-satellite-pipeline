@@ -5,6 +5,7 @@ import time
 import urllib.request
 from datetime import datetime
 from urllib.error import HTTPError
+from urllib.parse import unquote_plus
 from zoneinfo import ZoneInfo
 
 import boto3
@@ -145,21 +146,51 @@ def get_melbourne_today_parts():
     return today.strftime("%Y"), today.strftime("%m"), today.strftime("%d")
 
 
-def get_date_parts_from_event(event):
-    if isinstance(event, dict) and event.get("date"):
-        date_text = event["date"]
-        try:
-            parsed = datetime.strptime(date_text, "%Y-%m-%d")
-        except ValueError as exc:
-            raise ValueError("date must be in YYYY-MM-DD format") from exc
-
-        return parsed.strftime("%Y"), parsed.strftime("%m"), parsed.strftime("%d")
-
-    return get_melbourne_today_parts()
-
-
 def build_archive_package_key(yyyy, mm, dd):
     return f"published/news-site/archive/{yyyy}/{mm}/{dd}/package.json"
+
+
+def get_package_key_from_s3_event(event):
+    if not isinstance(event, dict):
+        return None
+
+    records = event.get("Records", [])
+    if not records:
+        return None
+
+    record = records[0]
+
+    if record.get("eventSource") != "aws:s3":
+        return None
+
+    key = record.get("s3", {}).get("object", {}).get("key")
+    if not key:
+        return None
+
+    return unquote_plus(key)
+
+
+def get_package_key_and_date(event):
+    archive_package_key = get_package_key_from_s3_event(event)
+
+    if archive_package_key:
+        parts = archive_package_key.split("/")
+
+        if (
+            len(parts) != 7
+            or parts[0] != "published"
+            or parts[1] != "news-site"
+            or parts[2] != "archive"
+            or parts[6] != "package.json"
+        ):
+            raise ValueError(f"Unexpected S3 package key: {archive_package_key}")
+
+        yyyy, mm, dd = parts[3], parts[4], parts[5]
+        return archive_package_key, yyyy, mm, dd
+
+    yyyy, mm, dd = get_melbourne_today_parts()
+    archive_package_key = build_archive_package_key(yyyy, mm, dd)
+    return archive_package_key, yyyy, mm, dd
 
 
 def build_jobs(inner):
@@ -219,10 +250,13 @@ def lambda_handler(event, context):
     if event is None:
         event = {}
 
-    force_regenerate = bool(event.get("force_regenerate", False)) if isinstance(event, dict) else False
+    force_regenerate = (
+        bool(event.get("force_regenerate", False))
+        if isinstance(event, dict)
+        else False
+    )
 
-    yyyy, mm, dd = get_date_parts_from_event(event)
-    archive_package_key = build_archive_package_key(yyyy, mm, dd)
+    archive_package_key, yyyy, mm, dd = get_package_key_and_date(event)
     archive_image_prefix = f"published/news-site/archive/{yyyy}/{mm}/{dd}/images"
 
     wrapper = read_json_s3(archive_package_key)
