@@ -142,9 +142,9 @@ Do not include markdown.
 Do not wrap the response in ```json.
 Do not wrap the response in code fences.
 Do not include explanation outside the JSON.
+Do not use quotation marks inside detailed_body, short_summary, evidence_note, headline, or image_prompt unless they are properly escaped JSON quotes.
 
 Create:
-
 * one hero story
 * exactly five concise website news stories
 
