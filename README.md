@@ -2,6 +2,7 @@
 
 Collects Starlink satellite data and stores current and historical snapshots in AWS S3.
 
-Uses aws agent core to orchestrate llm invocations to generate daily news based Athena queries defined as agent core tools. 
+Uses aws agent core to orchestrate llm invocations to generate daily news based on Athena queries defined as agent core tools. 
 
-powers skygrid.io news 
+Powers https://skygrid.io news 
+
